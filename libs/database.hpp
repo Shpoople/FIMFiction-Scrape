@@ -1,11 +1,19 @@
 sqlite3 *listDB;
 sqlite3 *storyDB;
 
-int storyStatusCheck = 0;
+int storyStatus[2];
+int chapterStatus;
 
 static int storyCheckCallback(void *NotUsed, int argc, char **argv, char **azColName){
+	//This should only send two values, which should always be integers, so we should be safe...
+	storyStatus[0] = atoi(argv[0]);
+	storyStatus[1] = atoi(argv[1]);
+	
+	return 0;
+}
+static int chapterCheckCallback(void *NotUsed, int argc, char **argv, char **azColName){
 	//This should only send one value, which should always be an integer, so we should be safe...
-	storyStatusCheck = atoi(argv[0]);
+	chapterStatus = atoi(argv[0]);
 	
 	return 0;
 }
@@ -32,7 +40,8 @@ bool createDatabases() {
 	listSql = "CREATE TABLE IF NOT EXISTS `list` (" \
 		"`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL," \
 		"`storyid` INTEGER NOT NULL," \
-		"`result` INTEGER NOT NULL);";
+		"`result` INTEGER NOT NULL," \
+		"`updated` INTEGER NOT NULL);";
 	
 	printw("Creating list table... ");
 	refresh();
@@ -119,6 +128,7 @@ bool createDatabases() {
 		chapterSql = "CREATE TABLE IF NOT EXISTS `chapters` (" \
 			"`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL," \
 			"`parentid` INTEGER NOT NULL," \
+			"`updated` INTEGER NOT NULL," \
 			"`chapterid` INTEGER NOT NULL," \
 			"`title` CHAR(255) NOT NULL," \
 			"`body` TEXT NOT NULL);";
@@ -165,12 +175,12 @@ void closeDatabases() {
 	refresh();
 }
 
-int setStoryStatus(int id, int result) {
+int setStoryStatus(int id, int result, int updated) {
 	char *ErrMsg = 0;
 	int RespCode;
 	char *sql = new char[100];
 	
-	sprintf(sql, "INSERT INTO `list` (`storyid`, `result`) VALUES (%i, %i);", id, result);
+	sprintf(sql, "INSERT INTO `list` (`storyid`, `result`, `updated`) VALUES (%i, %i, %i);", id, result, updated);
 	
 	RespCode = sqlite3_exec(listDB, (const char*)sql, NULL, 0, &ErrMsg);
 	
@@ -188,12 +198,12 @@ int setStoryStatus(int id, int result) {
 	return 1;
 }
 
-int updateStoryStatus(int id, int result) {
+int updateStoryStatus(int id, int result, int updated) {
 	char *ErrMsg = 0;
 	int RespCode;
 	char *sql = new char[100];
 	
-	sprintf(sql, "UPDATE `list` SET `result`=%i WHERE `storyid`=%i;", result, id);
+	sprintf(sql, "UPDATE `list` SET `result`=%i, `updated`=%i WHERE `storyid`=%i;", result, updated, id);
 	
 	RespCode = sqlite3_exec(listDB, (const char*)sql, NULL, 0, &ErrMsg);
 	
@@ -211,14 +221,15 @@ int updateStoryStatus(int id, int result) {
 	return 1;
 }
 
-int checkStoryStatus(int id) {
+void checkStoryStatus(int id, int &status, int &updated) {
 	char *ErrMsg = 0;
 	int RespCode;
 	char *sql = new char[100];
 	
-	storyStatusCheck = 0;
+	storyStatus[0] = 0;
+	storyStatus[1] = 0;
 	
-	sprintf(sql, "SELECT `result` FROM `list` WHERE `storyid`=%i LIMIT 1;", id);
+	sprintf(sql, "SELECT `result`, `updated` FROM `list` WHERE `storyid`=%i LIMIT 1;", id);
 	
 	RespCode = sqlite3_exec(listDB, (const char*)sql, storyCheckCallback, 0, &ErrMsg);
 	
@@ -233,7 +244,11 @@ int checkStoryStatus(int id) {
 		//refresh();
 	}
 	
-	return storyStatusCheck;
+	status = storyStatus[0];
+	updated = storyStatus[1];
+	
+	//printw("Database is reporting status of %i, and update date of %i\n", storyStatus[0], storyStatus[1]);
+	//refresh();
 }
 
 int saveStorySQL(int id, storySQL *story) {
@@ -260,12 +275,66 @@ int saveStorySQL(int id, storySQL *story) {
 	return 1;
 }
 
-int saveChapterSQL(int id, int chapter, const char *title, const char *body) {
+void checkChapterStatus(int id, int chapterNum, int &updated) {
+	char *ErrMsg = 0;
+	int RespCode;
+	char *sql = new char[100];
+	
+	storyStatus[0] = 0;
+	storyStatus[1] = 0;
+	
+	sprintf(sql, "SELECT `updated` FROM `chapters` WHERE `parentid`=%i AND `chapterid`=%i LIMIT 1;", id, chapterNum);
+	
+	RespCode = sqlite3_exec(storyDB, (const char*)sql, chapterCheckCallback, 0, &ErrMsg);
+	
+	if( RespCode != SQLITE_OK ){
+		printw("API SQL error: %s\n", ErrMsg);
+		refresh();
+		
+		sqlite3_free(ErrMsg);
+		exit(-1);
+	}else{
+		//printw("Success!\n");
+		//refresh();
+	}
+	
+	updated = chapterStatus;
+	
+	//printw("Database is reporting chapter update date of %i\n", chapterStatus);
+	//refresh();
+}
+
+int saveChapterSQL(int id, int chapter, int updated, const char *title, const char *body) {
 	char *ErrMsg = 0;
 	int RespCode;
 	char *sql = new char[1000000];
 	
-	sprintf(sql, "INSERT INTO `chapters` (`parentid`, `chapterid`, `title`, `body`) VALUES (%i, %i, '%s', '%s');", id, chapter, title, body);
+	sprintf(sql, "INSERT INTO `chapters` (`parentid`, `chapterid`, `updated`, `title`, `body`) VALUES (%i, %i, %i, '%s', '%s');", id, chapter, updated, title, body);
+	
+	RespCode = sqlite3_exec(storyDB, (const char*)sql, NULL, 0, &ErrMsg);
+	
+	if( RespCode != SQLITE_OK ){
+		printw("Chapter %i SQL error: %s\n", chapter, ErrMsg);
+		refresh();
+		
+		sqlite3_free(ErrMsg);
+		exit(-1);
+	}else{
+		//printw("Success! %s, %i\n", title, strlen(sql));
+		//refresh();
+	}
+	
+	return 1;
+}
+
+int updateChapterSQL(int id, int chapter, int updated, const char *title, const char *body) {
+	char *ErrMsg = 0;
+	int RespCode;
+	char *sql = new char[1000000];
+	
+	//sprintf(sql, "UPDATE `list` SET `result`=%i, `updated`=%i WHERE `storyid`=%i;", result, updated, id);
+	
+	sprintf(sql, "UPDATE `chapters`  SET `updated`=%i, `title`='%s', `body`='%s' WHERE `parentid`=%i AND `chapterid`=%i;", updated, title, body, id, chapter);
 	
 	RespCode = sqlite3_exec(storyDB, (const char*)sql, NULL, 0, &ErrMsg);
 	

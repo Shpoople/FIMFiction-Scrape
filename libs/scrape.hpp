@@ -1,13 +1,13 @@
-int scrapeState(int id);
+void scrapeState(int id, int &state, int &updated);
 bool checkStory(int id);
-bool scrapeStory(int id);
+bool scrapeStory(int id, bool scrape);
 void regexData(std::string s, std::string *ret);
 void sanitize(std::string &str);
 
 bool checkStory(int id) {
 	//just some simple variables
-	int state = 0;
-	int success = 0;
+	int state, updated, newdate, success = 0;
+	bool scrape = 1;
 	const char *states[5] = {"Completed", "Incomplete", "Hiatus", "Cancelled", "Invalid"};
 	
 	//Fluff
@@ -15,14 +15,14 @@ bool checkStory(int id) {
 	refresh();
 	
 	//Get state of story
-	state = checkStoryStatus(id);
+	checkStoryStatus(id, state, updated);
 	
 	//If it is 0, then we must not have it in our Database...
 	if (!state) {
-		state = scrapeState(id);
+		scrapeState(id, state, updated);
 		
 		//Set the new state
-		setStoryStatus(id, state);
+		setStoryStatus(id, state, updated);
 		
 		//We can tell the user what state the story is in
 		printw("[");
@@ -116,10 +116,10 @@ bool checkStory(int id) {
 		}
 			
 		//Let's give this scrape another whorl
-		state = scrapeState(id);
+		scrapeState(id, state, newdate);
 		
 		//Set the new state
-		updateStoryStatus(id, state);
+		updateStoryStatus(id, state, newdate);
 		
 		//We can tell the user what state the story is in
 		printw("[");
@@ -143,6 +143,14 @@ bool checkStory(int id) {
 		
 		printw("], ");
 		refresh();
+		
+		if (newdate <= updated) {
+			//The story has not been updated since our last scrape...
+			//printw("No Update...\n");
+			//refresh();
+			
+			scrape = 0;
+		}
 			
 		//Make sure the story isn't invalid...
 		if (state == 5) {
@@ -180,12 +188,12 @@ bool checkStory(int id) {
 	printw("Scraping... ");
 	refresh();
 	
-	success = scrapeStory(id);
+	success = scrapeStory(id, scrape);
 	
 	return success;
 }
 
-bool scrapeStory(int id) {
+bool scrapeStory(int id, bool scrape) {
 	char *filename = new char[100];
 	char *storyUrl = new char[100];
 	char *scrapeUrl = new char[100];
@@ -266,7 +274,7 @@ bool scrapeStory(int id) {
 	//unless I actually look at the first few bytes. Which I don't wanna do.
 	//Fortunately, webrowsers do that on their own, so all I have to do is save them with an arbitrary extension.
 	//Save thumbnail image
-	if (strcmp(image, "")) {
+	if (strcmp(image, "") && scrape == true) {
 		if (settings.saveImages == SAVE_THUMB || settings.saveImages == SAVE_ALL) {
 			sprintf(filename, "images/thumb/thumb_%i.pony", id);
 			
@@ -275,10 +283,12 @@ bool scrapeStory(int id) {
 		} else {
 			story.image = "null";
 		}
+	} else {
+		story.image = "null";
 	}
 	
 	//Save fullsize image
-	if (strcmp(full_image, "")) {
+	if (strcmp(full_image, "") && scrape == true) {
 		if (settings.saveImages == SAVE_FULL || settings.saveImages == SAVE_ALL) {
 			sprintf(filename, "images/%i.pony", id);
 			
@@ -287,6 +297,8 @@ bool scrapeStory(int id) {
 		} else {
 			story.full_image = "null";
 		}
+	} else {
+		story.full_image = "null";
 	}
 	
 	//Save the story itself.
@@ -311,26 +323,45 @@ bool scrapeStory(int id) {
 			for (picojson::array::const_iterator iter = list.begin(); iter != list.end(); ++iter) {
 				const char *chapTitle = (*iter).get("title").get<std::string>().c_str();
 				const char *chapUrl = (*iter).get("link").get<std::string>().c_str();
+				int lastUpdated = (int)(*iter).get("date_modified").get<double>();
 				
-				//Fetch data from chapter url
-				std::string rawData(dataFetch(chapUrl));
-				std::string chapData;
-				std::string strTitle(chapTitle);
+				//See if chapter has updated since we checked
+				int lastCached = 0;
+				checkChapterStatus(id, chapterNum, lastCached);
 				
-				//Process data for actual chapter via RegEx
-				regexData(rawData, &chapData);
+				//printw("API is reporting last chapter update date of %i\n", lastUpdated);
+				//refresh();
 				
-				//Strip of illegal characters, needs to be streamlined
-				sanitize(chapData);
-				sanitize(strTitle);
+				if (lastCached != lastUpdated) {
+					//Dates do not match.
+					//This must either be our first time checking, or the chapter has been updated
+					
+					//Fetch data from chapter url
+					std::string rawData(dataFetch(chapUrl));
+					std::string chapData;
+					std::string strTitle(chapTitle);
+					
+					//Process data for actual chapter via RegEx
+					regexData(rawData, &chapData);
+					
+					//Strip of illegal characters, needs to be streamlined
+					sanitize(chapData);
+					sanitize(strTitle);
+					
+					//Save chapter to SQL
+					if (lastCached == 0) {
+						//We have never checked this chapter before.
+						saveChapterSQL(id, chapterNum, lastUpdated, strTitle.c_str(), chapData.c_str());
+					} else {
+						updateChapterSQL(id, chapterNum, lastUpdated, strTitle.c_str(), chapData.c_str());
+					}
+				}
 				
-				//Save chapter to SQL
-				saveChapterSQL(id, chapterNum, strTitle.c_str(), chapData.c_str());
 				chapterNum++;
 			}
 		} else {
 			//Story is empty, what's the use in doing anything else?
-			printw("Empty...\n");
+			printw("Empty.\n");
 			return 0;
 		}
 	}
@@ -352,7 +383,7 @@ bool scrapeStory(int id) {
 	sanitize(strAuthor);
 	story.author = strAuthor.c_str();
 	
-		//Categories
+	//Categories
 	if (v.get("story").get("categories").get("2nd Person").get<bool>())
 		addTagSQL(id, 1);
 	if (v.get("story").get("categories").get("Adventure").get<bool>())
@@ -393,16 +424,18 @@ bool scrapeStory(int id) {
 		addTagSQL(id, 19);
 	
 	//After we get everything done, it's time to save the story data...
-	saveStorySQL(id, &story);
+	if (scrape == true) {
+		saveStorySQL(id, &story);
+	}
 	
 	printw("Done.\n");
+	refresh();
 	
 	return 1;
 	
 }
 
-int scrapeState(int id) {
-	int state = 0;
+void scrapeState(int id, int &state, int &updated) {
 	
 	char *scrapeUrl = new char[100];
 	const char *jsonData;
@@ -420,11 +453,12 @@ int scrapeState(int id) {
 	if (!v.get("error").is<picojson::null>()) {
 		
 		//The query returns an invalid story, return invalid 
-		return 5;
+		state = 5;
 		
 	} else {
 		//It's not as simple as that. We must go deeper...
 		const char *stateString = v.get("story").get("status").get<std::string>().c_str();
+		updated = (int)v.get("story").get("date_modified").get<double>();
 		
 		if (!strcmp(stateString, "Complete"))
 			state = 1;
@@ -437,9 +471,10 @@ int scrapeState(int id) {
 			
 		if (!strcmp(stateString, "Cancelled"))
 			state = 4;
-				
-		return state;
 	}
+	
+	//printw("API is reporting status of %i, and update date of %i\n", state, updated);
+	//refresh();
 }
 
 void regexData(std::string s, std::string *ret) {

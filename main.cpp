@@ -1,11 +1,3 @@
-//WHAT TO DO:
-//-Check to see if iterative reruns would like to begin from the last valid story
-//-Skip stories that have not been modified at all...
-//-Exit if empty story for non-SQL scrapes
-//-Use binary identifiers from images to determine image type?
-//-Fix cURL errors crashing program
-//-Allow retries of cURL downloads
-
 #include <stdio.h>
 #include <unistd.h>
 #include <stdlib.h>
