@@ -30,3 +30,12 @@ Currently, the **FIMFiction Story Scraper** may be built with this command:
 - Use magic numbers from images to determine image type.
 - Fix cURL errors crashing program.
 - Allow retries of cURL downloads.
+
+## Known Bugs
+
+As I am by no means an expert programmer, I can occasionally get stumped by things that are obvious to other people. If any of these unresolved bugs makes you smack your head in pity, please tell me why.
+
+- Unknown Segfault occurs on Bunsenlabs Linux (Unknown if it occurs on other distros) when scraping story 38 (Unknown if it occurs on other stories). I have narrowed it down to the sprintf function in saveChapterSQL. But, beyond that I do not know why this is occuring. Simplifying the code to the point in which it's just sprintf adding a single static character to the char array still causes a segfault.
+- The sqlite3 database seems to experience some sort of timeout after a while. This results in an `unable to open database file` error when running sqlite3_exec, after several thousand succesful SQL executions.
+- cURL experiences the occasional `Problem with the SSL CA cert (path? access rights?)` error. This may just be my potato internet, though.
+- Any interruption in the internet connection causes cURL to fail gracelessly. This ends with the program crashing.
