@@ -256,7 +256,34 @@ int saveStorySQL(int id, storySQL *story) {
 	int RespCode;
 	char *sql = new char[10000];
 	
-	sprintf(sql, "INSERT INTO `stories` (`storyid`, `title`, `author`, `desc`, `short_desc`, `image`, `full_image`, `status`, `modified`, `rating`, `chapters`) VALUES ('%i', '%s', '%s', '%s', '%s', '%s', '%s', %i, %i, %i, %i);", id, story->title, story->author, story->desc, story->short_desc, story->image, story->full_image, story->status, story->modified, story->rating, story->chapters);
+	sprintf(sql, "INSERT INTO `stories` (`storyid`, `title`, `author`, `desc`, `short_desc`, `image`, `full_image`, `status`, `modified`, `rating`, `chapters`) VALUES (%i, '%s', '%s', '%s', '%s', '%s', '%s', %i, %i, %i, %i);", id, story->title, story->author, story->desc, story->short_desc, story->image, story->full_image, story->status, story->modified, story->rating, story->chapters);
+	
+	RespCode = sqlite3_exec(storyDB, (const char*)sql, NULL, 0, &ErrMsg);
+	
+	if( RespCode != SQLITE_OK ){
+		printw("Story SQL error: %s\n", ErrMsg);
+		refresh();
+		
+		sqlite3_free(ErrMsg);
+		exit(-1);
+	}else{
+		//printw("Great Success!\n");
+		//refresh();
+	}
+	refresh();
+	
+	return 1;
+}
+
+int updateStorySQL(int id, storySQL *story) {
+	char *ErrMsg = 0;
+	int RespCode;
+	char *sql = new char[10000];
+	
+	//sprintf(sql, "UPDATE `list` SET `result`=%i, `updated`=%i WHERE `storyid`=%i;", result, updated, id);
+	//`storyid`, 
+	
+	sprintf(sql, "UPDATE `stories` SET `title`='%s', `author`='%s', `desc`='%s', `short_desc`='%s', `image`='%s', `full_image`='%s', `status`=%i, `modified`=%i, `rating`=%i, `chapters`=%i WHERE `storyid`=%i;", story->title, story->author, story->desc, story->short_desc, story->image, story->full_image, story->status, story->modified, story->rating, story->chapters, id);
 	
 	RespCode = sqlite3_exec(storyDB, (const char*)sql, NULL, 0, &ErrMsg);
 	

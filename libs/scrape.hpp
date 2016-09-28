@@ -1,13 +1,12 @@
 void scrapeState(int id, int &state, int &updated);
 bool checkStory(int id);
-bool scrapeStory(int id, bool scrape);
+bool scrapeStory(int id, int scrape);
 void regexData(std::string s, std::string *ret);
 void sanitize(std::string &str);
 
 bool checkStory(int id) {
 	//just some simple variables
-	int state, updated, newdate, success = 0;
-	bool scrape = 1;
+	int state, updated, newdate, success, scrape = 0;
 	const char *states[5] = {"Completed", "Incomplete", "Hiatus", "Cancelled", "Invalid"};
 	
 	//Fluff
@@ -77,6 +76,8 @@ bool checkStory(int id) {
 					
 			return 0;
 		}
+		
+		scrape = 1;
 		
 	} else {
 		//If the story's state is not to be rescraped, exit false. Else, continue...
@@ -150,6 +151,8 @@ bool checkStory(int id) {
 			//refresh();
 			
 			scrape = 0;
+		} else {
+			scrape = 2;
 		}
 			
 		//Make sure the story isn't invalid...
@@ -193,7 +196,7 @@ bool checkStory(int id) {
 	return success;
 }
 
-bool scrapeStory(int id, bool scrape) {
+bool scrapeStory(int id, int scrape) {
 	char *filename = new char[100];
 	char *storyUrl = new char[100];
 	char *scrapeUrl = new char[100];
@@ -424,8 +427,10 @@ bool scrapeStory(int id, bool scrape) {
 		addTagSQL(id, 19);
 	
 	//After we get everything done, it's time to save the story data...
-	if (scrape == true) {
+	if (scrape == 1) {
 		saveStorySQL(id, &story);
+	} else if (scrape == 2) {
+		updateStorySQL(id, &story);
 	}
 	
 	printw("Done.\n");
