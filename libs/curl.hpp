@@ -44,10 +44,25 @@ const char *dataFetch(const char *url) {
 				
 				goto retryFetch;
 			} else {
-				printw("curl_easy_perform() failed: %s\n", curl_easy_strerror(res));
+				printw("curl_easy_perform() failed: %s\nCheck your internet connection, and hit ENTER to try again...\n", curl_easy_strerror(res));
 				refresh();
 				
-				exit(-1);
+				//Set keypad mode, and hide cursor
+				keypad(stdscr, TRUE);
+				curs_set(0);
+				
+				int c = wgetch(stdscr);
+				
+				switch(c){	
+					case 10: //Go ahead and retry
+						tries = 1;
+						goto retryFetch;
+						
+						break;
+					default: //Exit, instead
+						exit(-1);
+						break;
+				}
 			}
 		} else {
 			return readBuffer.c_str();
@@ -108,11 +123,26 @@ int dataSave(const char *url, const char *file) {
 				
 				goto retrySave;
 			} else {
-				//printw("curl_easy_perform() failed: %s\n", curl_easy_strerror(res));
-				//refresh();
+				printw("curl_easy_perform() failed: %s\nCheck your internet connection, and hit ENTER to try again...\n", curl_easy_strerror(res));
+				refresh();
 				
-				//exit(-1);
-				return 0;
+				//Set keypad mode, and hide cursor
+				keypad(stdscr, TRUE);
+				curs_set(0);
+				
+				int c = wgetch(stdscr);
+				
+				switch(c){	
+					case 10: //Go ahead and retry
+						tries = 1;
+						goto retrySave;
+						
+						break;
+					default: //Exit, instead
+						exit(-1);
+						break;
+				}
+				//return 0;
 			}
 		} else {
 			return 1;

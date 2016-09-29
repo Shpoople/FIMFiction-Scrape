@@ -26,7 +26,6 @@ The program may be built with the `make` command
 - Allow for multithreaded operation
 - Check to see if iterative runs would like to begin from the last valid story.
 - Use magic numbers from images to determine image type.
-- Allow for additional cURL retries on user prompt.
 
 ## Known Bugs
 
