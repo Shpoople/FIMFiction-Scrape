@@ -204,7 +204,7 @@ bool scrapeStory(int id, int scrape) {
 	picojson::value v;
 	std::string err;
 		
-	sprintf(scrapeUrl, "https://www.fimfiction.net/api/story.php?story=%i", id);
+	sprintf(scrapeUrl, "http://www.fimfiction.net/api/story.php?story=%i", id);
 	jsonData = dataFetch(scrapeUrl);
 		
 	err = picojson::parse(v, jsonData);
@@ -310,10 +310,10 @@ bool scrapeStory(int id, int scrape) {
 		if (settings.saveStories == SAVE_RAW) {
 			//Save as raw text
 			sprintf(filename, "stories/%i.txt", id);
-			sprintf(storyUrl, "https://www.fimfiction.net/download_story.php?story=%i", id);
+			sprintf(storyUrl, "http://www.fimfiction.net/download_story.php?story=%i", id);
 		} else {
 			sprintf(filename, "stories/%i.epub", id);
-			sprintf(storyUrl, "https://www.fimfiction.net/download_epub.php?story=%i", id);
+			sprintf(storyUrl, "http://www.fimfiction.net/download_epub.php?story=%i", id);
 		}
 		
 		dataSave(storyUrl, filename);
@@ -447,7 +447,7 @@ void scrapeState(int id, int &state, int &updated) {
 	picojson::value v;
 	std::string err;
 		
-	sprintf(scrapeUrl, "https://www.fimfiction.net/api/story.php?story=%i", id);
+	sprintf(scrapeUrl, "http://www.fimfiction.net/api/story.php?story=%i", id);
 	jsonData = dataFetch(scrapeUrl);
 		
 	err = picojson::parse(v, jsonData);
