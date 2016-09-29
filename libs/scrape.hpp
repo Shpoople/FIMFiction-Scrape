@@ -273,6 +273,14 @@ bool scrapeStory(int id, int scrape) {
 		return 0;
 	}
 	
+	//Check to see if the story has any chapters. If not, skip...
+	if (story.chapters == 0) {
+		printw("Empty.\n");
+		refresh();
+			
+		return 0;
+	}
+	
 	//Note: Due to the way that FIMFiction saves images, I can't actually tell what type they are
 	//unless I actually look at the first few bytes. Which I don't wanna do.
 	//Fortunately, webrowsers do that on their own, so all I have to do is save them with an arbitrary extension.
@@ -365,6 +373,8 @@ bool scrapeStory(int id, int scrape) {
 		} else {
 			//Story is empty, what's the use in doing anything else?
 			printw("Empty.\n");
+			refresh();
+			
 			return 0;
 		}
 	}
