@@ -25,7 +25,6 @@ The program may be built with the `make` command
 
 - Allow for multithreaded operation
 - Check to see if iterative runs would like to begin from the last valid story.
-- Skip stories that have not been modified at all.
 - Exit if empty story for non-SQL scrapes.
 - Use magic numbers from images to determine image type.
 - Allow for additional cURL retries on user prompt.
