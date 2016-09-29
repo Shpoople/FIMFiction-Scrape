@@ -40,7 +40,7 @@ const char *dataFetch(const char *url) {
 				refresh();
 				tries++;
 				
-				sleep(1);
+				sleep(5);
 				
 				goto retryFetch;
 			} else {
@@ -104,7 +104,7 @@ int dataSave(const char *url, const char *file) {
 				refresh();
 				tries++;
 				
-				sleep(1);
+				sleep(5);
 				
 				goto retrySave;
 			} else {
