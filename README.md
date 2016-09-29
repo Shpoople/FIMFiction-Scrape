@@ -17,9 +17,9 @@ There are a wide range of preferences for which you can change, including:
 
 There are several libraries that are required in order to build, `ncurses`, `sqlite3`, `libcurl`, and `boost_regex`
 
-Currently, the **FIMFiction Story Scraper** may be built with this command:
+These libraries can be installed by typing `sudo apt-get install libncurses5-dev libsqlite3-dev libcurl4-openssl-dev libboost-all-dev`
 
-`g++ -Wall -o "main" "main.cpp" -std=c++11 -lncurses -lsqlite3 -lcurl -lboost_regex`
+The program may be built with the `make` command
 
 ## WHAT TO DO
 
