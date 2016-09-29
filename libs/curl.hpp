@@ -9,6 +9,10 @@ const char *dataFetch(const char *url) {
 	CURL *curl;
 	CURLcode res;
 	readBuffer = "";
+	
+	int tries = 1;
+	
+	retryFetch:
 
 	curl_global_init(CURL_GLOBAL_DEFAULT);
 
@@ -31,7 +35,20 @@ const char *dataFetch(const char *url) {
 		res = curl_easy_perform(curl);
     
 		if(res != CURLE_OK) {
-			fprintf(stderr, "curl_easy_perform() failed: %s\n", curl_easy_strerror(res));
+			if (tries <= 3) {
+				printw("Try %i failed... Retrying.\n", tries);
+				refresh();
+				tries++;
+				
+				sleep(1);
+				
+				goto retryFetch;
+			} else {
+				printw("curl_easy_perform() failed: %s\n", curl_easy_strerror(res));
+				refresh();
+				
+				exit(-1);
+			}
 		} else {
 			return readBuffer.c_str();
 		}
@@ -48,6 +65,10 @@ int dataSave(const char *url, const char *file) {
 	CURL *curl;
 	CURLcode res;
 	FILE *fp; 
+	
+	int tries = 1;
+	
+	retrySave:
 
 	curl_global_init(CURL_GLOBAL_DEFAULT);
 
@@ -78,7 +99,21 @@ int dataSave(const char *url, const char *file) {
 		res = curl_easy_perform(curl);
     
 		if(res != CURLE_OK) {
-			return 0; //fprintf(stderr, "curl_easy_perform() failed: %s\n", curl_easy_strerror(res));
+			if (tries <= 3) {
+				printw("Try %i failed... Retrying.\n", tries);
+				refresh();
+				tries++;
+				
+				sleep(1);
+				
+				goto retrySave;
+			} else {
+				//printw("curl_easy_perform() failed: %s\n", curl_easy_strerror(res));
+				//refresh();
+				
+				//exit(-1);
+				return 0;
+			}
 		} else {
 			return 1;
 		}

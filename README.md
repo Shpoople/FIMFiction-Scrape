@@ -28,13 +28,10 @@ The program may be built with the `make` command
 - Skip stories that have not been modified at all.
 - Exit if empty story for non-SQL scrapes.
 - Use magic numbers from images to determine image type.
-- Fix cURL errors crashing program.
-- Allow retries of cURL downloads.
+- Allow for additional cURL retries on user prompt.
 
 ## Known Bugs
 
 As I am by no means an expert programmer, I can occasionally get stumped by things that are obvious to other people. If any of these unresolved bugs makes you smack your head in pity, please tell me why.
 
 - The sqlite3 database seems to experience some sort of timeout after a while. This results in an `unable to open database file` error when running sqlite3_exec, after several thousand succesful SQL executions.
-- cURL experiences the occasional `Problem with the SSL CA cert (path? access rights?)` error. This may just be my potato internet, though.
-- Any interruption in the internet connection causes cURL to fail gracelessly. This ends with the program crashing.
