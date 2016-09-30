@@ -3,16 +3,12 @@
 #include <stdlib.h>
 #include <curses.h>
 #include <time.h>
-
 #include <iostream>
 #include <fstream>
-
 #include <sqlite3.h>
-
 #include <string>
 #include <string.h>
 #include <curl/curl.h>
-
 #include <boost/regex.hpp>
 
 #if defined(_WIN32)
@@ -23,13 +19,13 @@
 
 using namespace boost; 
 
-#include "libs/structs.hpp"
-#include "libs/menu.hpp"
-#include "libs/prefs.hpp"
-#include "libs/curl.hpp"
-#include "libs/database.hpp"
 #include "libs/picojson.h"
-#include "libs/scrape.hpp"
+#include "libs/structs.cpp"
+#include "libs/menu.cpp"
+#include "libs/prefs.cpp"
+#include "libs/curl.cpp"
+#include "libs/database.cpp"
+#include "libs/scrape.cpp"
 
 void makeDirs() {
 	#if defined(_WIN32)
