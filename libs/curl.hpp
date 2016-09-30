@@ -33,6 +33,10 @@ const char *dataFetch(const char *url) {
 		#endif
 	
 		res = curl_easy_perform(curl);
+		
+		//This was the source of a massive memory leak, just if you're wondering...
+		curl_easy_cleanup(curl);
+		curl_global_cleanup();
     
 		if(res != CURLE_OK) {
 			if (tries <= 3) {
@@ -67,11 +71,7 @@ const char *dataFetch(const char *url) {
 		} else {
 			return readBuffer.c_str();
 		}
-
-		curl_easy_cleanup(curl);
 	}
-
-	curl_global_cleanup();
 
 	return 0;
 }
@@ -94,6 +94,8 @@ int dataSave(const char *url, const char *file) {
 		
 		if( fp == NULL ) {
 			printw("File cannot be opened!\n");
+			fclose(fp);
+			
 			return 0;
 		}
 		
@@ -112,6 +114,13 @@ int dataSave(const char *url, const char *file) {
 		#endif
 	
 		res = curl_easy_perform(curl);
+		
+		//This was the source of a massive memory leak, just if you're wondering...
+		curl_easy_cleanup(curl);
+		curl_global_cleanup();
+		
+		//This one, too...
+		fclose(fp);
     
 		if(res != CURLE_OK) {
 			if (tries <= 3) {
@@ -147,11 +156,7 @@ int dataSave(const char *url, const char *file) {
 		} else {
 			return 1;
 		}
-
-		curl_easy_cleanup(curl);
 	}
-
-	curl_global_cleanup();
 
 	return 0;
 }
