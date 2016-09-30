@@ -15,6 +15,12 @@
 
 #include <boost/regex.hpp>
 
+#if defined(_WIN32)
+	#include <direct.h>
+#else 
+	#include <sys/stat.h>
+#endif
+
 using namespace boost; 
 
 #include "libs/structs.hpp"
@@ -24,6 +30,20 @@ using namespace boost;
 #include "libs/database.hpp"
 #include "libs/picojson.h"
 #include "libs/scrape.hpp"
+
+void makeDirs() {
+	#if defined(_WIN32)
+		_mkdir("db");
+		_mkdir("images");
+		_mkdir("images\thumbs");
+		_mkdir("stories");
+	#else 
+		mkdir("db", 0777);
+		mkdir("images", 0777);
+		mkdir("images/thumbs", 0777);
+		mkdir("stories", 0777);
+	#endif
+}
 
 int main() {
 	int story, saved, checked = 0;
@@ -43,6 +63,8 @@ int main() {
 		init_pair(2, COLOR_YELLOW, -1);
 		init_pair(3, COLOR_RED, -1);
 	}
+	
+	makeDirs();
 	
 	loadPrefs();
 	
