@@ -29,7 +29,5 @@ The program may be built with the `make` command
 
 ## Known Bugs
 
-As I am by no means an expert programmer, I can occasionally get stumped by things that are obvious to other people. If any of these unresolved bugs makes you smack your head in pity, please tell me why.
-
-- The sqlite3 database seems to experience some sort of timeout after a while. This results in an `unable to open database file` error when running sqlite3_exec, after several thousand succesful SQL executions.
-- There is a small memory leak when downloading images (I think)
+As of right now, there are no known bugs (yay).
+Of course, this just means that I haven't found them yet...
