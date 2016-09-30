@@ -31,12 +31,12 @@ void makeDirs() {
 	#if defined(_WIN32)
 		_mkdir("db");
 		_mkdir("images");
-		_mkdir("images\thumbs");
+		_mkdir("images\thumb");
 		_mkdir("stories");
 	#else 
 		mkdir("db", 0777);
 		mkdir("images", 0777);
-		mkdir("images/thumbs", 0777);
+		mkdir("images/thumb", 0777);
 		mkdir("stories", 0777);
 	#endif
 }

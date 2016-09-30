@@ -93,8 +93,8 @@ int dataSave(const char *url, const char *file) {
 		fp = fopen(file, "wb"); 
 		
 		if( fp == NULL ) {
-			printw("File cannot be opened!\n");
-			fclose(fp);
+			printw("File cannot be opened! (%s)\n", file);
+			refresh();
 			
 			return 0;
 		}
