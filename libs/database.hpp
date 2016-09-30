@@ -4,6 +4,9 @@ sqlite3 *storyDB;
 int storyStatus[2];
 int chapterStatus;
 
+//test
+char *sql = new char[1000000];
+
 static int storyCheckCallback(void *NotUsed, int argc, char **argv, char **azColName){
 	//This should only send two values, which should always be integers, so we should be safe...
 	storyStatus[0] = atoi(argv[0]);
@@ -178,7 +181,6 @@ void closeDatabases() {
 int setStoryStatus(int id, int result, int updated) {
 	char *ErrMsg = 0;
 	int RespCode;
-	char *sql = new char[100];
 	
 	sprintf(sql, "INSERT INTO `list` (`storyid`, `result`, `updated`) VALUES (%i, %i, %i);", id, result, updated);
 	
@@ -201,7 +203,6 @@ int setStoryStatus(int id, int result, int updated) {
 int updateStoryStatus(int id, int result, int updated) {
 	char *ErrMsg = 0;
 	int RespCode;
-	char *sql = new char[100];
 	
 	sprintf(sql, "UPDATE `list` SET `result`=%i, `updated`=%i WHERE `storyid`=%i;", result, updated, id);
 	
@@ -224,7 +225,6 @@ int updateStoryStatus(int id, int result, int updated) {
 void checkStoryStatus(int id, int &status, int &updated) {
 	char *ErrMsg = 0;
 	int RespCode;
-	char *sql = new char[100];
 	
 	storyStatus[0] = 0;
 	storyStatus[1] = 0;
@@ -254,7 +254,6 @@ void checkStoryStatus(int id, int &status, int &updated) {
 int saveStorySQL(int id, storySQL *story) {
 	char *ErrMsg = 0;
 	int RespCode;
-	char *sql = new char[10000];
 	
 	sprintf(sql, "INSERT INTO `stories` (`storyid`, `title`, `author`, `desc`, `short_desc`, `image`, `full_image`, `status`, `modified`, `rating`, `chapters`) VALUES (%i, '%s', '%s', '%s', '%s', '%s', '%s', %i, %i, %i, %i);", id, story->title, story->author, story->desc, story->short_desc, story->image, story->full_image, story->status, story->modified, story->rating, story->chapters);
 	
@@ -278,7 +277,6 @@ int saveStorySQL(int id, storySQL *story) {
 int updateStorySQL(int id, storySQL *story) {
 	char *ErrMsg = 0;
 	int RespCode;
-	char *sql = new char[10000];
 	
 	//sprintf(sql, "UPDATE `list` SET `result`=%i, `updated`=%i WHERE `storyid`=%i;", result, updated, id);
 	//`storyid`, 
@@ -305,7 +303,6 @@ int updateStorySQL(int id, storySQL *story) {
 void checkChapterStatus(int id, int chapterNum, int &updated) {
 	char *ErrMsg = 0;
 	int RespCode;
-	char *sql = new char[100];
 	
 	storyStatus[0] = 0;
 	storyStatus[1] = 0;
@@ -334,7 +331,6 @@ void checkChapterStatus(int id, int chapterNum, int &updated) {
 int saveChapterSQL(int id, int chapter, int updated, const char *title, const char *body) {
 	char *ErrMsg = 0;
 	int RespCode;
-	char *sql = new char[1000000];
 	
 	sprintf(sql, "INSERT INTO `chapters` (`parentid`, `chapterid`, `updated`, `title`, `body`) VALUES (%i, %i, %i, '%s', '%s');", id, chapter, updated, title, body);
 	
@@ -357,7 +353,6 @@ int saveChapterSQL(int id, int chapter, int updated, const char *title, const ch
 int updateChapterSQL(int id, int chapter, int updated, const char *title, const char *body) {
 	char *ErrMsg = 0;
 	int RespCode;
-	char *sql = new char[1000000];
 	
 	//sprintf(sql, "UPDATE `list` SET `result`=%i, `updated`=%i WHERE `storyid`=%i;", result, updated, id);
 	
