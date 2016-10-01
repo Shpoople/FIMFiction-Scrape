@@ -24,7 +24,6 @@ The program may be built with the `make` command
 ## WHAT TO DO
 
 - Allow for multithreaded operation
-- Check to see if iterative runs would like to begin from the last valid story.
 - Use magic numbers from images to determine image type.
 
 ## Known Bugs

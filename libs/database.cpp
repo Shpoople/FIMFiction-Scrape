@@ -14,6 +14,13 @@ static int storyCheckCallback(void *NotUsed, int argc, char **argv, char **azCol
 	
 	return 0;
 }
+
+static int lastStoryCallback(void *NotUsed, int argc, char **argv, char **azColName){
+	//This should only send two values, which should always be integers, so we should be safe...
+	storyStatus[0] = atoi(argv[0]);
+	
+	return 0;
+}
 static int chapterCheckCallback(void *NotUsed, int argc, char **argv, char **azColName){
 	//This should only send one value, which should always be an integer, so we should be safe...
 	chapterStatus = atoi(argv[0]);
@@ -176,6 +183,28 @@ void closeDatabases() {
 		
 	printw("Success!\n");
 	refresh();
+}
+
+int findLastStory() {
+	char *ErrMsg = 0;
+	int RespCode;
+	
+	sprintf(sql, "SELECT `storyid` FROM `list` ORDER BY `storyid` DESC LIMIT 1;");
+	
+	RespCode = sqlite3_exec(listDB, (const char*)sql, lastStoryCallback, 0, &ErrMsg);
+	
+	if( RespCode != SQLITE_OK ){
+		printw("API SQL error: %s\n", ErrMsg);
+		refresh();
+		
+		sqlite3_free(ErrMsg);
+		exit(-1);
+	}else{
+		//printw("Success!\n");
+		//refresh();
+	}
+	
+	return storyStatus[0];
 }
 
 int setStoryStatus(int id, int result, int updated) {

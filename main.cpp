@@ -42,7 +42,7 @@ void makeDirs() {
 }
 
 int main() {
-	int story, saved, checked = 0;
+	int story, saved, checked, lastStory, startAt = 0;
 	float percentage, average = 0.00;
 	time_t timeStart;
 	time_t timeEnd;
@@ -66,6 +66,26 @@ int main() {
 	
 	createDatabases();
 	
+	lastStory = findLastStory();
+	
+	if (lastStory) {
+		char proceedOpt[50];
+		
+		sprintf(proceedOpt, "Start from latest story (%i)", lastStory);
+		startAt = printMenu("Existing database detected", 2, "Start from beginning", proceedOpt);
+		
+		if (!startAt) {
+			startAt = settings.checkStart;
+		} else {
+			startAt = lastStory;
+		}
+	} else {
+		startAt = settings.checkStart;
+	}
+	
+	clear();
+	refresh();
+	
 	printw("Welcome to the ");
 	attron(A_STANDOUT);
 	printw("FIMFiction story scraper");
@@ -75,7 +95,7 @@ int main() {
 	
 	time(&timeStart);
 	
-	for (story = settings.checkStart; story <= settings.checkLimit; story++) {
+	for (story = startAt; story <= settings.checkLimit; story++) {
 		saved += checkStory(story);
 	}
 	
