@@ -95,6 +95,8 @@ int main() {
 	
 	time(&timeStart);
 	
+	saved = 0;
+	
 	for (story = startAt; story <= settings.checkLimit; story++) {
 		saved += checkStory(story);
 	}

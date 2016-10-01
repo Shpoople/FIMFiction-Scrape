@@ -5,6 +5,32 @@ static size_t WriteCallback(void *contents, size_t size, size_t nmemb, void *use
     return size * nmemb;
 }
 
+void setFileExt(const char *baseFilename, const char file[8]) {
+	//jpeg = ff d8 ff
+	//png = 89 50 4e 47 0d 0a 1a 0a
+	//gif = GIF
+	char filename[50];
+	
+	if (file[1] == 0x50) {
+		//printw("File is a PNG (0x%x)\n", file[1]);
+		//refresh();
+				
+		sprintf(filename, "%s.png", baseFilename);
+	} else if (file[1] == 0x49) {
+		//printw("File is a GIF (0x%x)\n", file[1]);
+		//refresh();
+				
+		sprintf(filename, "%s.gif", baseFilename);
+	} else {
+		//printw("File is a JPEG (0x%x)\n", file[1]);
+		//refresh();
+				
+		sprintf(filename, "%s.jpg", baseFilename);
+	}
+	
+	rename(baseFilename , filename);
+}
+
 const char *dataFetch(const char *url) {
 	CURL *curl;
 	CURLcode res;
@@ -79,7 +105,8 @@ const char *dataFetch(const char *url) {
 int dataSave(const char *url, const char *file) {
 	CURL *curl;
 	CURLcode res;
-	FILE *fp; 
+	FILE *fp;
+	char byteBuffer[8];
 	
 	int tries = 1;
 	
@@ -90,7 +117,7 @@ int dataSave(const char *url, const char *file) {
 	curl = curl_easy_init();
 	if(curl) {
 		// Open file 
-		fp = fopen(file, "wb"); 
+		fp = fopen(file, "w+b"); 
 		
 		if( fp == NULL ) {
 			printw("File cannot be opened! (%s)\n", file);
@@ -119,7 +146,9 @@ int dataSave(const char *url, const char *file) {
 		curl_easy_cleanup(curl);
 		curl_global_cleanup();
 		
-		//This one, too...
+		fseek(fp, SEEK_SET, 0);
+		fread(byteBuffer, sizeof(char), sizeof(byteBuffer)-1, fp);
+		
 		fclose(fp);
     
 		if(res != CURLE_OK) {
@@ -154,6 +183,8 @@ int dataSave(const char *url, const char *file) {
 				//return 0;
 			}
 		} else {
+			setFileExt(file, byteBuffer);
+			
 			return 1;
 		}
 	}

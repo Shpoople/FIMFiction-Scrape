@@ -24,7 +24,6 @@ The program may be built with the `make` command
 ## WHAT TO DO
 
 - Allow for multithreaded operation
-- Use magic numbers from images to determine image type.
 
 ## Known Bugs
 

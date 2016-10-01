@@ -287,7 +287,7 @@ bool scrapeStory(int id, int scrape) {
 	//Save thumbnail image
 	if (strcmp(image, "") && scrape == true) {
 		if (settings.saveImages == SAVE_THUMB || settings.saveImages == SAVE_ALL) {
-			sprintf(filename, "images/thumb/thumb_%i.pony", id);
+			sprintf(filename, "images/thumb/thumb_%i", id);
 			
 			dataSave(image, filename);
 			story.image = filename;
@@ -301,7 +301,7 @@ bool scrapeStory(int id, int scrape) {
 	//Save fullsize image
 	if (strcmp(full_image, "") && scrape == true) {
 		if (settings.saveImages == SAVE_FULL || settings.saveImages == SAVE_ALL) {
-			sprintf(filename, "images/%i.pony", id);
+			sprintf(filename, "images/story_%i", id);
 			
 			dataSave(full_image, filename);
 			story.full_image = filename;
