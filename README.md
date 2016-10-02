@@ -23,6 +23,7 @@ The program may be built with the `make` command
 
 ## WHAT TO DO
 
+- Scrape website for story characters (regex on `<a href="/tag/twilight-sparkle" class="character_icon"`)
 - Allow for multithreaded operation
 
 ## Known Bugs
