@@ -116,7 +116,8 @@ bool createDatabases() {
 	tagSql = "CREATE TABLE IF NOT EXISTS `tags` (" \
 			"`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL," \
 			"`story` INTEGER NOT NULL," \
-			"`tag` INTEGER NOT NULL);";
+			"`tag` INTEGER NOT NULL," \
+			"`extra` CHAR(100) DEFAULT '');";
 	
 	printw("Creating tags table... ");
 	refresh();
@@ -406,9 +407,31 @@ int updateChapterSQL(int id, int chapter, int updated, const char *title, const 
 int addTagSQL(int id, int tag) {
 	char *ErrMsg = 0;
 	int RespCode;
-	char *sql = new char[1000];
 			
 	sprintf(sql, "INSERT INTO `tags` (`story`, `tag`) VALUES (%i, %i);", id, tag);
+	
+	RespCode = sqlite3_exec(storyDB, (const char*)sql, NULL, 0, &ErrMsg);
+	
+	if( RespCode != SQLITE_OK ){
+		printw("Tag SQL error: %s\n", ErrMsg);
+		refresh();
+		
+		sqlite3_free(ErrMsg);
+		exit(-1);
+	}else{
+		//printw("Success!\n");
+		//refresh();
+	}
+	refresh();
+	
+	return 1;
+}
+
+int addExtraTagSQL(int id, std::string extra) {
+	char *ErrMsg = 0;
+	int RespCode;
+			
+	sprintf(sql, "INSERT INTO `tags` (`story`, `tag`, `extra`) VALUES (%i, 0, '%s');", id, extra.c_str());
 	
 	RespCode = sqlite3_exec(storyDB, (const char*)sql, NULL, 0, &ErrMsg);
 	

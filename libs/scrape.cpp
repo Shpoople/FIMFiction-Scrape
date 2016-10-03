@@ -1,6 +1,7 @@
-void scrapeState(int id, int &state, int &updated);
 bool checkStory(int id);
 bool scrapeStory(int id, int scrape);
+void scrapeState(int id, int &state, int &updated);
+void scrapeExtraTags(int id);
 void regexData(std::string s, std::string *ret);
 void sanitize(std::string &str);
 
@@ -436,6 +437,9 @@ bool scrapeStory(int id, int scrape) {
 		addTagSQL(id, 18);
 	if (v.get("story").get("categories").get("Tragedy").get<bool>())
 		addTagSQL(id, 19);
+		
+	//Since the FIMFiction API is such a piece of shit, we are forced to do this.
+	scrapeExtraTags(id);
 	
 	//After we get everything done, it's time to save the story data...
 	if (scrape == 1) {
@@ -456,7 +460,6 @@ bool scrapeStory(int id, int scrape) {
 }
 
 void scrapeState(int id, int &state, int &updated) {
-	
 	char *scrapeUrl = new char[100];
 	const char *jsonData;
 	picojson::value v;
@@ -497,6 +500,43 @@ void scrapeState(int id, int &state, int &updated) {
 	
 	//printw("API is reporting status of %i, and update date of %i\n", state, updated);
 	//refresh();
+}
+
+void scrapeExtraTags(int id) {
+	const char *storyData;
+	char *scrapeUrl = new char[100];
+	
+	sprintf(scrapeUrl, "http://www.fimfiction.net/story/%i", id);
+	storyData = dataFetch(scrapeUrl);
+	
+	//regex expression and matching objects
+	std::string raw(storyData);
+	raw.erase(std::remove(raw.begin(), raw.end(), '\n'), raw.end());
+	regex contRegex{"<div class=\"inner_data\">(.+?)<div class=\"story_stats\""};
+	smatch container;
+	
+	if (regex_search(raw, container, contRegex)) {
+		//regex expression and matching objects
+		std::string newstring = container[1].str();
+		regex tagRegex{"href=\"\\/tag\\/(.+?)\" class=\"character_icon\""};
+		smatch tag;
+		
+		//if (regex_search(container[0].str(), tag, tagRegex)) {
+			//printf("%s\n", tag[1].str().c_str());
+		//}
+		
+		sregex_iterator m1(newstring.begin(), newstring.end(), tagRegex);
+		sregex_iterator m2;
+		for (; m1 != m2; ++m1){
+			//printw("Extra tag: %s\n", m1->str(1).c_str());
+			//refresh();
+			std::string charName =  m1->str(1);
+			
+			addExtraTagSQL(id, charName);
+		}
+	}
+	
+	delete[] scrapeUrl;
 }
 
 void regexData(std::string s, std::string *ret) {
