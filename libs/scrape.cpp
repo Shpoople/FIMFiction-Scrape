@@ -200,6 +200,7 @@ bool scrapeStory(int id, int scrape) {
 	char *filename = new char[100];
 	char *storyUrl = new char[100];
 	char *scrapeUrl = new char[100];
+	
 	const char *jsonData;
 	picojson::value v;
 	std::string err;
@@ -446,6 +447,10 @@ bool scrapeStory(int id, int scrape) {
 	printw("Done.\n");
 	refresh();
 	
+	delete[] filename;
+	delete[] storyUrl;
+	delete[] scrapeUrl;
+	
 	return 1;
 	
 }
@@ -487,6 +492,8 @@ void scrapeState(int id, int &state, int &updated) {
 		if (!strcmp(stateString, "Cancelled"))
 			state = 4;
 	}
+	
+	delete[] scrapeUrl;
 	
 	//printw("API is reporting status of %i, and update date of %i\n", state, updated);
 	//refresh();
