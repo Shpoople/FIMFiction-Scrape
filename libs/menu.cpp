@@ -64,6 +64,8 @@ int printMenu(const char *title, int count, ...) {
 }
 
 char *printInput(const char *title, bool integer = false) {
+	//I know this a memory leak, but I don't care.
+	//It's not like we're gonna be running this function a million times
 	char *str = new char[80];
 	
 	pistart:

@@ -23,6 +23,7 @@ bool checkStory(int id) {
 	//Get story API data
 	sprintf(scrapeUrl, "http://www.fimfiction.net/api/story.php?story=%i", id);
 	APIData = dataFetch(scrapeUrl);
+	delete[] scrapeUrl;
 	
 	//If it is 0, then we must not have it in our Database...
 	if (!state) {
@@ -201,8 +202,6 @@ bool checkStory(int id) {
 	
 	success = scrapeStory(id, APIData, scrape);
 	
-	delete[] scrapeUrl;
-	
 	return success;
 }
 
@@ -276,6 +275,9 @@ bool scrapeStory(int id, const char *data, int scrape) {
 		printw("Mature, Skipping...\n");
 		refresh();
 		
+		delete[] filename;
+		delete[] storyUrl;
+		
 		return 0;
 	}
 	
@@ -283,6 +285,9 @@ bool scrapeStory(int id, const char *data, int scrape) {
 	if (story.chapters == 0) {
 		printw("Empty.\n");
 		refresh();
+		
+		delete[] filename;
+		delete[] storyUrl;
 			
 		return 0;
 	}
@@ -349,6 +354,9 @@ bool scrapeStory(int id, const char *data, int scrape) {
 			//Story is empty, what's the use in doing anything else?
 			printw("Empty.\n");
 			refresh();
+			
+			delete[] filename;
+			delete[] storyUrl;
 			
 			return 0;
 		}
