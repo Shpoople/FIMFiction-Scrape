@@ -287,37 +287,7 @@ bool scrapeStory(int id, const char *data, int scrape) {
 		return 0;
 	}
 	
-	//Note: Due to the way that FIMFiction saves images, I can't actually tell what type they are
-	//unless I actually look at the first few bytes. Which I don't wanna do.
-	//Fortunately, webrowsers do that on their own, so all I have to do is save them with an arbitrary extension.
-	//Save thumbnail image
-	if (strcmp(image, "") && scrape == true) {
-		if (settings.saveImages == SAVE_THUMB || settings.saveImages == SAVE_ALL) {
-			sprintf(filename, "images/thumb/thumb_%i", id);
-			
-			dataSave(image, filename);
-			story.image = filename;
-		} else {
-			story.image = "null";
-		}
-	} else {
-		story.image = "null";
-	}
-	
-	//Save fullsize image
-	if (strcmp(full_image, "") && scrape == true) {
-		if (settings.saveImages == SAVE_FULL || settings.saveImages == SAVE_ALL) {
-			sprintf(filename, "images/story_%i", id);
-			
-			dataSave(full_image, filename);
-			story.full_image = filename;
-		} else {
-			story.full_image = "null";
-		}
-	} else {
-		story.full_image = "null";
-	}
-	
+	//Alright, now we can...
 	//Save the story data itself.
 	if (!settings.saveStories == SAVE_SQL) {
 		if (settings.saveStories == SAVE_RAW) {
@@ -384,71 +354,103 @@ bool scrapeStory(int id, const char *data, int scrape) {
 		}
 	}
 	
-	//Sanitize all of the varchar variables
-	std::string strTitle(story.title);
-	sanitize(strTitle);
-	story.title = strTitle.c_str();
-	
-	std::string strDesc(story.desc);
-	sanitize(strDesc);
-	story.desc = strDesc.c_str();
-	
-	std::string strSDesc(story.short_desc);
-	sanitize(strSDesc);
-	story.short_desc = strSDesc.c_str();
-	
-	std::string strAuthor(story.author);
-	sanitize(strAuthor);
-	story.author = strAuthor.c_str();
-	
-	//Categories
-	if (v.get("story").get("categories").get("2nd Person").get<bool>())
-		addTagSQL(id, 1);
-	if (v.get("story").get("categories").get("Adventure").get<bool>())
-		addTagSQL(id, 2);
-	if (v.get("story").get("categories").get("Alternate Universe").get<bool>())
-		addTagSQL(id, 3);
-	if (v.get("story").get("categories").get("Anthro").get<bool>())
-		addTagSQL(id, 4);
-	if (v.get("story").get("categories").get("Comedy").get<bool>())
-		addTagSQL(id, 5);
-	if (v.get("story").get("categories").get("Crossover").get<bool>())
-		addTagSQL(id, 6);
-	if (v.get("story").get("categories").get("Dark").get<bool>())
-		addTagSQL(id, 7);
-	if (v.get("story").get("categories").get("Drama").get<bool>())
-		addTagSQL(id, 8);
-	if (v.get("story").get("categories").get("Equestria Girls").get<bool>())
-		addTagSQL(id, 9);
-	if (v.get("story").get("categories").get("Horror").get<bool>())
-		addTagSQL(id, 10);
-	if (v.get("story").get("categories").get("Human").get<bool>())
-		addTagSQL(id, 11);
-	if (v.get("story").get("categories").get("Mystery").get<bool>())
-		addTagSQL(id, 12);
-	if (v.get("story").get("categories").get("Random").get<bool>())
-		addTagSQL(id, 13);
-	if (v.get("story").get("categories").get("Romance").get<bool>())
-		addTagSQL(id, 14);
-	if (v.get("story").get("categories").get("Sad").get<bool>())
-		addTagSQL(id, 15);
-	if (v.get("story").get("categories").get("Sci-Fi").get<bool>())
-		addTagSQL(id, 16);
-	if (v.get("story").get("categories").get("Slice of Life").get<bool>())
-		addTagSQL(id, 17);
-	if (v.get("story").get("categories").get("Thriller").get<bool>())
-		addTagSQL(id, 18);
-	if (v.get("story").get("categories").get("Tragedy").get<bool>())
-		addTagSQL(id, 19);
+	//If we want to scrape/rescrape the story info/images/tags
+	if (scrape) {
+		//Save thumbnail image
+		if (strcmp(image, "") && scrape == true) {
+			if (settings.saveImages == SAVE_THUMB || settings.saveImages == SAVE_ALL) {
+				sprintf(filename, "images/thumb/thumb_%i", id);
+				
+				dataSave(image, filename);
+				story.image = filename;
+			} else {
+				story.image = "null";
+			}
+		} else {
+			story.image = "null";
+		}
 		
-	//Since the FIMFiction API is such a piece of shit, we are forced to do this.
-	scrapeExtraTags(id);
-	
-	//After we get everything done, it's time to save the story data...
-	if (scrape == 1) {
-		saveStorySQL(id, &story);
-	} else if (scrape == 2) {
-		updateStorySQL(id, &story);
+		//Save fullsize image
+		if (strcmp(full_image, "") && scrape == true) {
+			if (settings.saveImages == SAVE_FULL || settings.saveImages == SAVE_ALL) {
+				sprintf(filename, "images/story_%i", id);
+				
+				dataSave(full_image, filename);
+				story.full_image = filename;
+			} else {
+				story.full_image = "null";
+			}
+		} else {
+			story.full_image = "null";
+		}
+		
+		
+		//Sanitize all of the varchar variables
+		std::string strTitle(story.title);
+		sanitize(strTitle);
+		story.title = strTitle.c_str();
+		
+		std::string strDesc(story.desc);
+		sanitize(strDesc);
+		story.desc = strDesc.c_str();
+		
+		std::string strSDesc(story.short_desc);
+		sanitize(strSDesc);
+		story.short_desc = strSDesc.c_str();
+		
+		std::string strAuthor(story.author);
+		sanitize(strAuthor);
+		story.author = strAuthor.c_str();
+		
+		//Categories
+		if (v.get("story").get("categories").get("2nd Person").get<bool>())
+			addTagSQL(id, 1);
+		if (v.get("story").get("categories").get("Adventure").get<bool>())
+			addTagSQL(id, 2);
+		if (v.get("story").get("categories").get("Alternate Universe").get<bool>())
+			addTagSQL(id, 3);
+		if (v.get("story").get("categories").get("Anthro").get<bool>())
+			addTagSQL(id, 4);
+		if (v.get("story").get("categories").get("Comedy").get<bool>())
+			addTagSQL(id, 5);
+		if (v.get("story").get("categories").get("Crossover").get<bool>())
+			addTagSQL(id, 6);
+		if (v.get("story").get("categories").get("Dark").get<bool>())
+			addTagSQL(id, 7);
+		if (v.get("story").get("categories").get("Drama").get<bool>())
+			addTagSQL(id, 8);
+		if (v.get("story").get("categories").get("Equestria Girls").get<bool>())
+			addTagSQL(id, 9);
+		if (v.get("story").get("categories").get("Horror").get<bool>())
+			addTagSQL(id, 10);
+		if (v.get("story").get("categories").get("Human").get<bool>())
+			addTagSQL(id, 11);
+		if (v.get("story").get("categories").get("Mystery").get<bool>())
+			addTagSQL(id, 12);
+		if (v.get("story").get("categories").get("Random").get<bool>())
+			addTagSQL(id, 13);
+		if (v.get("story").get("categories").get("Romance").get<bool>())
+			addTagSQL(id, 14);
+		if (v.get("story").get("categories").get("Sad").get<bool>())
+			addTagSQL(id, 15);
+		if (v.get("story").get("categories").get("Sci-Fi").get<bool>())
+			addTagSQL(id, 16);
+		if (v.get("story").get("categories").get("Slice of Life").get<bool>())
+			addTagSQL(id, 17);
+		if (v.get("story").get("categories").get("Thriller").get<bool>())
+			addTagSQL(id, 18);
+		if (v.get("story").get("categories").get("Tragedy").get<bool>())
+			addTagSQL(id, 19);
+			
+		//Since the FIMFiction API is such a piece of shit, we are forced to do this.
+		scrapeExtraTags(id);
+		
+		//After we get everything done, it's time to save the story data...
+		if (scrape == 1) {
+			saveStorySQL(id, &story);
+		} else if (scrape == 2) {
+			updateStorySQL(id, &story);
+		}
 	}
 	
 	printw("Done.\n");
