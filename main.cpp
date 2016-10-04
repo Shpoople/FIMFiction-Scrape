@@ -101,6 +101,14 @@ int main() {
 		saved += checkStory(story);
 	}
 	
+	//After we are done, we may close the ncurses window
+	closeDatabases();
+    
+    refresh();
+    endwin();
+    
+    //Calculate and print stats
+	
 	time(&timeEnd);
 	
 	checked = (settings.checkLimit - settings.checkStart)+1;
@@ -109,10 +117,5 @@ int main() {
 	percentage = ((float)saved/(float)checked)*100.0f;
 	average = (float)duration/(float)checked;
 	
-	printw("\nFinished. Saved %i out of %i stories processed (%2.0f%)\nElapsed time %i seconds (average: %2.1f seconds)\n\n", saved, checked, percentage, duration, average);
-	
-	closeDatabases();
-    
-    endwin();
-    refresh();
+	printf("Finished. Saved %i out of %i stories processed (%2.0f%%)\nElapsed time %i seconds (average: %2.1f seconds)\n\n", saved, checked, percentage, (int)duration, average);
 }
