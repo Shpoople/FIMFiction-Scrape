@@ -49,6 +49,10 @@ const char *dataFetch(const char *url) {
 		curl_easy_setopt(curl, CURLOPT_WRITEDATA, &readBuffer);
 		curl_easy_setopt(curl, CURLOPT_COOKIEFILE, "");
 		curl_easy_setopt(curl, CURLOPT_COOKIE, "view_mature=true;");
+		
+		//Timeout settings
+		curl_easy_setopt(curl, CURLOPT_TIMEOUT, 30L);
+		curl_easy_setopt(curl, CURLOPT_CONNECTTIMEOUT, 10L);
 
 		#ifdef SKIP_PEER_VERIFICATION
 			curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0L);
@@ -131,6 +135,10 @@ int dataSave(const char *url, const char *file) {
 		curl_easy_setopt(curl, CURLOPT_WRITEDATA, fp);
 		curl_easy_setopt(curl, CURLOPT_COOKIEFILE, "");
 		curl_easy_setopt(curl, CURLOPT_COOKIE, "view_mature=true;");
+		
+		//Timeout settings
+		curl_easy_setopt(curl, CURLOPT_TIMEOUT, 30L);
+		curl_easy_setopt(curl, CURLOPT_CONNECTTIMEOUT, 10L);
 
 		#ifdef SKIP_PEER_VERIFICATION
 			curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0L);
@@ -153,7 +161,7 @@ int dataSave(const char *url, const char *file) {
     
 		if(res != CURLE_OK) {
 			if (tries <= 3) {
-				printw("Try %i failed... Retrying.\n", tries);
+				printw("\nTry %i failed... Retrying... ", tries);
 				refresh();
 				tries++;
 				
