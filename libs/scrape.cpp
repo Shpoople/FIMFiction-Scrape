@@ -1,14 +1,17 @@
 bool checkStory(int id);
-bool scrapeStory(int id, int scrape);
-void scrapeState(int id, int &state, int &updated);
+bool scrapeStory(int id, const char *data, int scrape);
+void scrapeState(const char *data, int &state, int &updated);
 void scrapeExtraTags(int id);
 void regexData(std::string s, std::string *ret);
 void sanitize(std::string &str);
 
+const char *states[5] = {"Completed", "Incomplete", "Hiatus", "Cancelled", "Invalid"};
+
 bool checkStory(int id) {
 	//just some simple variables
 	int state, updated, newdate, success, scrape = 0;
-	const char *states[5] = {"Completed", "Incomplete", "Hiatus", "Cancelled", "Invalid"};
+	const char *APIData;
+	char *scrapeUrl = new char[100];
 	
 	//Fluff
 	printw("Checking status of story %i of %i... ", id, settings.checkLimit);
@@ -17,9 +20,13 @@ bool checkStory(int id) {
 	//Get state of story
 	checkStoryStatus(id, state, updated);
 	
+	//Get story API data
+	sprintf(scrapeUrl, "http://www.fimfiction.net/api/story.php?story=%i", id);
+	APIData = dataFetch(scrapeUrl);
+	
 	//If it is 0, then we must not have it in our Database...
 	if (!state) {
-		scrapeState(id, state, updated);
+		scrapeState(APIData, state, updated);
 		
 		//Set the new state
 		setStoryStatus(id, state, updated);
@@ -118,7 +125,7 @@ bool checkStory(int id) {
 		}
 			
 		//Let's give this scrape another whorl
-		scrapeState(id, state, newdate);
+		scrapeState(APIData, state, newdate);
 		
 		//Set the new state
 		updateStoryStatus(id, state, newdate);
@@ -192,24 +199,21 @@ bool checkStory(int id) {
 	printw("Scraping... ");
 	refresh();
 	
-	success = scrapeStory(id, scrape);
+	success = scrapeStory(id, APIData, scrape);
+	
+	delete[] scrapeUrl;
 	
 	return success;
 }
 
-bool scrapeStory(int id, int scrape) {
+bool scrapeStory(int id, const char *data, int scrape) {
 	char *filename = new char[100];
 	char *storyUrl = new char[100];
-	char *scrapeUrl = new char[100];
 	
-	const char *jsonData;
 	picojson::value v;
 	std::string err;
 		
-	sprintf(scrapeUrl, "http://www.fimfiction.net/api/story.php?story=%i", id);
-	jsonData = dataFetch(scrapeUrl);
-		
-	err = picojson::parse(v, jsonData);
+	err = picojson::parse(v, data);
 	if (!err.empty()) {
 		printw("Error: %s", err.c_str());
 	}
@@ -314,9 +318,8 @@ bool scrapeStory(int id, int scrape) {
 		story.full_image = "null";
 	}
 	
-	//Save the story itself.
+	//Save the story data itself.
 	if (!settings.saveStories == SAVE_SQL) {
-		
 		if (settings.saveStories == SAVE_RAW) {
 			//Save as raw text
 			sprintf(filename, "stories/%i.txt", id);
@@ -453,22 +456,16 @@ bool scrapeStory(int id, int scrape) {
 	
 	delete[] filename;
 	delete[] storyUrl;
-	delete[] scrapeUrl;
 	
 	return 1;
 	
 }
 
-void scrapeState(int id, int &state, int &updated) {
-	char *scrapeUrl = new char[100];
-	const char *jsonData;
+void scrapeState(const char *data, int &state, int &updated) {
 	picojson::value v;
 	std::string err;
 		
-	sprintf(scrapeUrl, "http://www.fimfiction.net/api/story.php?story=%i", id);
-	jsonData = dataFetch(scrapeUrl);
-		
-	err = picojson::parse(v, jsonData);
+	err = picojson::parse(v, data);
 	if (!err.empty()) {
 		printw("Error: %s", err.c_str());
 	}
@@ -495,8 +492,6 @@ void scrapeState(int id, int &state, int &updated) {
 		if (!strcmp(stateString, "Cancelled"))
 			state = 4;
 	}
-	
-	delete[] scrapeUrl;
 	
 	//printw("API is reporting status of %i, and update date of %i\n", state, updated);
 	//refresh();
