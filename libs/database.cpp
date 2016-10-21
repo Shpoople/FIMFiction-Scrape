@@ -448,3 +448,67 @@ int addExtraTagSQL(int id, std::string extra) {
 	
 	return 1;
 }
+
+int deleteStorySQL(int id) {
+	char *ErrMsg = 0;
+	int RespCode;
+	
+	printw("Deleting incomplete data for story %i... ", id);
+	refresh();
+			
+	//DELETE ENTRY FROM STORY LIST
+	sprintf(sql, "DELETE FROM `list` WHERE `storyid`=%i;", id);
+	RespCode = sqlite3_exec(listDB, (const char*)sql, NULL, 0, &ErrMsg);
+	
+	if( RespCode != SQLITE_OK ){
+		printw("List SQL error: %s\n", ErrMsg);
+		refresh();
+		
+		sqlite3_free(ErrMsg);
+		exit(-1);
+	}
+	refresh();
+	
+	//DELETE ENTRY FROM STORY DATABASE
+	sprintf(sql, "DELETE FROM `stories` WHERE `storyid`=%i;", id);
+	RespCode = sqlite3_exec(storyDB, (const char*)sql, NULL, 0, &ErrMsg);
+	
+	if( RespCode != SQLITE_OK ){
+		printw("Story SQL error: %s\n", ErrMsg);
+		refresh();
+		
+		sqlite3_free(ErrMsg);
+		exit(-1);
+	}
+	refresh();
+	
+	//DELETE ENTRIES FROM TAG DATABASE
+	sprintf(sql, "DELETE FROM `tags` WHERE `story`=%i;", id);
+	RespCode = sqlite3_exec(storyDB, (const char*)sql, NULL, 0, &ErrMsg);
+	
+	if( RespCode != SQLITE_OK ){
+		printw("Tag SQL error: %s\n", ErrMsg);
+		refresh();
+		
+		sqlite3_free(ErrMsg);
+		exit(-1);
+	}
+	refresh();
+	
+	//DELETE ENTRY FROM STORY DATABASE
+	sprintf(sql, "DELETE FROM `chapters` WHERE `parentid`=%i;", id);
+	RespCode = sqlite3_exec(storyDB, (const char*)sql, NULL, 0, &ErrMsg);
+	
+	if( RespCode != SQLITE_OK ){
+		printw("Chapter SQL error: %s\n", ErrMsg);
+		refresh();
+		
+		sqlite3_free(ErrMsg);
+		exit(-1);
+	}
+	
+	printf("Done.\n");
+	refresh();
+	
+	return 1;
+}

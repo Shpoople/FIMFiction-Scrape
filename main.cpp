@@ -79,6 +79,9 @@ int main() {
 		} else {
 			startAt = lastStory;
 		}
+		
+		//Delete last story regardless, in case we exited with an error
+		deleteStorySQL(startAt);
 	} else {
 		startAt = settings.checkStart;
 	}
