@@ -4,8 +4,7 @@ sqlite3 *storyDB;
 int storyStatus[2];
 int chapterStatus;
 
-//test
-char *sql = new char[1000000];
+char *sql = new char[2000000];
 
 static int storyCheckCallback(void *NotUsed, int argc, char **argv, char **azColName){
 	//This should only send two values, which should always be integers, so we should be safe...
