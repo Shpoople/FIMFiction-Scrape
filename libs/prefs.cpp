@@ -76,19 +76,23 @@ bool createPrefs() {
 	settings.saveStories = SAVE_SQL;
 	settings.saveImages = SAVE_FULL;
 	
+	settings.threads = 0;
+	
 	//Set up menu dialog
 	const char *ExplicitMenuOptions[2] = {"Do not save explicit stories", "Save explicit stories"};
 	const char *storyMenuOptions[3] = {"Save stories in SQL Database", "Save stories as eBooks", "Save stories as raw text"};
 	const char *ImageMenuOptions[4] = {"Do not save images", "Save thumbnail images", "Save fullsize images", "Save all images"};
 	char startMenuDialog[25];
 	char limitMenuDialog[25];
+	char threadMenuDialog[50];
 	
 	//Create menu and navigate
 	while(1) {
 		sprintf(startMenuDialog, "Start at story %i", settings.checkStart);
 		sprintf(limitMenuDialog, "End at story %i", settings.checkLimit);
+		sprintf(threadMenuDialog, "Use %i cURL threads (0 = disabled)", settings.threads);
 		
-		result = printMenu("Set preferences", 8, "Set stories to be saved", "Set stories to be rechecked", ExplicitMenuOptions[settings.saveExplicit], startMenuDialog, limitMenuDialog, storyMenuOptions[settings.saveStories], ImageMenuOptions[settings.saveImages], "Save preferences and return");
+		result = printMenu("Set preferences", 9, "Set stories to be saved", "Set stories to be rechecked", ExplicitMenuOptions[settings.saveExplicit], startMenuDialog, limitMenuDialog, storyMenuOptions[settings.saveStories], ImageMenuOptions[settings.saveImages], threadMenuDialog, "Save preferences and return");
 		
 		switch(result) {
 			case 0: //Change story fetching prefrences
@@ -120,6 +124,10 @@ bool createPrefs() {
 				break;
 				
 			case 7: //Exit prefrences menu
+				settings.threads = atoi(printInput("Set number of cURL threads to use", true));
+				break;
+				
+			case 8:
 				saveFile();
 				return 1;
 				break;

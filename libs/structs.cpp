@@ -17,6 +17,8 @@ struct prefs {
 	
 	int saveStories;
 	int saveImages;
+	
+	int threads;
 };
 
 struct storySQL {

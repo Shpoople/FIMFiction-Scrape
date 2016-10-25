@@ -12,6 +12,7 @@ There are a wide range of preferences for which you can change, including:
 - Where to start and stop your story scrape
 - Whether to save your stories as raw text, eBooks, or in an SQL Database
 - Whether or not to save the fullsize cover images, thumbnails, or both.
+- How many cURL 'threads' to run simultaneously.
 
 ## Building
 
@@ -23,7 +24,7 @@ The program may be built with the `make` command
 
 ## WHAT TO DO
 
-- Allow for multithreaded operation
+- Further debug multithreaded operation
 
 ## Known Bugs
 

@@ -10,6 +10,7 @@
 #include <string.h>
 #include <curl/curl.h>
 #include <boost/regex.hpp>
+#include <thread>
 
 #if defined(_WIN32)
 	#include <direct.h>

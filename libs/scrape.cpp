@@ -1,4 +1,33 @@
-bool checkStory(int id);
+#define NOTSTARTED 0
+#define STARTED 1
+#define FINISHED 2
+#define ERROR 3
+
+class threadPool {
+	public:
+		threadPool(int id, int chapters);
+		~threadPool();
+		void append(int chapNumber, const char *chapTitle, const char *chapUrl, int lastUpdated, int updated);
+		void execute(int threads);
+		void finish(int thread, int status);
+		
+		int finished = 0;
+	private:
+		int _id;
+		int _chapters;
+		
+		//Thread stuff
+		std::thread *t;
+		int *threadStatus;
+		
+		//Storage stuff
+		const char **_chapTitle;
+		const char **_chapUrl;
+		int *_lastUpdated;
+		int *_updated;
+};
+
+void threadDL(int id, int chapNumber, const char *chapTitle, const char *chapUrl, int lastUpdated, int updated, threadPool *pool);bool checkStory(int id);
 bool scrapeStory(int id, const char *data, int scrape);
 void scrapeState(const char *data, int &state, int &updated);
 void scrapeExtraTags(int id);
@@ -311,6 +340,8 @@ bool scrapeStory(int id, const char *data, int scrape) {
 			const picojson::array list = v.get("story").get("chapters").get<picojson::array>();
 			int chapterNum = 0;
 			
+			threadPool threads(id, story.chapters);
+			
 			for (picojson::array::const_iterator iter = list.begin(); iter != list.end(); ++iter) {
 				const char *chapTitle = (*iter).get("title").get<std::string>().c_str();
 				const char *chapUrl = (*iter).get("link").get<std::string>().c_str();
@@ -327,28 +358,39 @@ bool scrapeStory(int id, const char *data, int scrape) {
 					//Dates do not match.
 					//This must either be our first time checking, or the chapter has been updated
 					
-					//Fetch data from chapter url
-					std::string rawData(dataFetch(chapUrl));
-					std::string chapData;
-					std::string strTitle(chapTitle);
 					
-					//Process data for actual chapter via RegEx
-					regexData(rawData, &chapData);
-					
-					//Strip of illegal characters, needs to be streamlined
-					sanitize(chapData);
-					sanitize(strTitle);
-					
-					//Save chapter to SQL
-					if (lastCached == 0) {
-						//We have never checked this chapter before.
-						saveChapterSQL(id, chapterNum, lastUpdated, strTitle.c_str(), chapData.c_str());
+					if (settings.threads) {
+						threads.append(chapterNum, chapTitle, chapUrl, lastCached, lastUpdated);
 					} else {
-						updateChapterSQL(id, chapterNum, lastUpdated, strTitle.c_str(), chapData.c_str());
+						//Fetch data from chapter url
+						std::string rawData(dataFetch(chapUrl));
+						std::string chapData;
+						std::string strTitle(chapTitle);
+						
+						//Process data for actual chapter via RegEx
+						regexData(rawData, &chapData);
+						
+						//Strip of illegal characters, needs to be streamlined
+						sanitize(chapData);
+						sanitize(strTitle);
+						
+						//Save chapter to SQL
+						if (lastCached == 0) {
+							//We have never checked this chapter before.
+							saveChapterSQL(id, chapterNum, lastUpdated, strTitle.c_str(), chapData.c_str());
+						} else {
+							updateChapterSQL(id, chapterNum, lastUpdated, strTitle.c_str(), chapData.c_str());
+						}
 					}
 				}
 				
 				chapterNum++;
+			}
+			
+			if (settings.threads) {
+				//Execute threads and wait until they're finished
+				threads.execute(settings.threads);
+				while(!threads.finished);
 			}
 		} else {
 			//Story is empty, what's the use in doing anything else?
@@ -573,4 +615,122 @@ void sanitize(std::string &str) {
 			loc = str.find_first_of(strLocate[i], loc+1); // Relocate again.
 		}
 	}
+}
+
+///////////////////////////////////////////
+/////MULTI-THREAD OPERATION////////////////
+///////////////////////////////////////////
+threadPool::threadPool(int id, int chapters) {
+	//Create and assign shit
+	this->_id = id;
+	this->_chapters = chapters;
+	
+	this->t = new std::thread[chapters];
+	this->threadStatus = new int[chapters];
+	
+
+	this->_chapTitle = new const char*[chapters];
+	this->_chapUrl = new const char*[chapters];
+	this->_lastUpdated = new int[chapters];
+	this->_updated = new int[chapters];
+	
+	for (int i = 0; i < chapters; i++) {
+		this->threadStatus[i] = NOTSTARTED;
+	}
+}
+
+threadPool::~threadPool() {
+	//Delet this
+	delete[] this->t;
+	delete[] this->threadStatus;
+	
+	delete[] this->_lastUpdated;
+	delete[] this->_updated;
+	
+	delete[] this->_chapTitle;
+	delete[] this->_chapUrl;
+}
+
+void threadPool::append(int chapNumber, const char *chapTitle, const char *chapUrl, int lastUpdated, int updated) {
+	//Add chapter information to the queue
+	this->_chapTitle[chapNumber] = chapTitle;
+	this->_chapUrl[chapNumber] = chapUrl;
+	this->_updated[chapNumber] = updated;
+	this->_lastUpdated[chapNumber] = lastUpdated;
+}
+
+void threadPool::execute(int threads) {
+	if (this->_chapters < threads) {
+		//We have less chapters than threads, execute chapters directly
+		
+		for (int i = 0; i < this->_chapters; ++i) {
+			t[i] = std::thread(threadDL, this->_id, i, this->_chapTitle[i], this->_chapUrl[i], this->_lastUpdated[i], this->_updated[i], this);
+			this->threadStatus[i] = STARTED;
+			t[i].detach();
+		}
+	} else {
+		//We have more chapters than threads, execute via thread number
+		
+		for (int i = 0; i < threads; ++i) {
+			t[i] = std::thread(threadDL, this->_id, i, this->_chapTitle[i], this->_chapUrl[i], this->_lastUpdated[i], this->_updated[i], this);
+			this->threadStatus[i] = STARTED;
+			t[i].detach();
+		}
+	}
+}
+
+void threadPool::finish(int thread, int status) {
+	this->threadStatus[thread] = status;
+	int finishedThreads = 0;
+	
+	//Now we look for an unstarted thread, and execute it if there is
+	for (int i = 0; i < this->_chapters; i++) {
+		if (this->threadStatus[i] == NOTSTARTED) {
+			t[i] = std::thread(threadDL, this->_id, i, this->_chapTitle[i], this->_chapUrl[i], this->_lastUpdated[i], this->_updated[i], this);
+			t[i].detach();
+			this->threadStatus[i] = STARTED;
+			
+			return;
+		}
+	}
+	
+	//Now we check to see if there are any threads still running
+	for (int n = 0; n < this->_chapters; n++) {
+		if (this->threadStatus[n] == FINISHED || this->threadStatus[n] == ERROR) {
+			finishedThreads++;
+		}
+	}
+	
+	//If there isn't, then we're all finished
+	if (finishedThreads == this->_chapters) {
+		this->finished = 1;
+	}
+}
+
+void threadDL(int id, int chapNumber, const char *chapTitle, const char *chapUrl, int lastUpdated, int updated, threadPool *pool) {
+	//printw("Downloading chapter %i of story %i, %s\n", chapNumber, id, chapTitle);
+	//refresh();
+	
+	//Fetch data from chapter url
+	std::string rawData(dataFetch(chapUrl));
+	std::string chapData;
+	std::string strTitle(chapTitle);
+					
+	//Process data for actual chapter via RegEx
+	regexData(rawData, &chapData);
+					
+	//Strip of illegal characters, needs to be streamlined
+	sanitize(chapData);
+	sanitize(strTitle);
+					
+	//Save chapter to SQL
+	if (lastUpdated == 0) {
+		//We have never checked this chapter before.
+		saveChapterSQL(id, chapNumber, updated, strTitle.c_str(), chapData.c_str());
+	} else {
+		updateChapterSQL(id, chapNumber, lastUpdated, strTitle.c_str(), chapData.c_str());
+	}
+	
+	usleep(chapNumber*200);
+	pool->finish(chapNumber, FINISHED);
 }
