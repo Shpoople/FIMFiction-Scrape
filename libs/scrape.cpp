@@ -42,6 +42,16 @@ bool checkStory(int id) {
 	const char *APIData;
 	char *scrapeUrl = new char[100];
 	
+	//Special exceptions
+	if (id == 165939) {
+		//iloveportalz0r has broken the API
+		printw("Skipping story 165939, because wtf iloveportalz0r, you broke the API...\n");
+		setStoryStatus(id, 5, 0);
+		refresh();
+		
+		return 0;
+	}
+	
 	//Fluff
 	printw("Checking status of story %i of %i... ", id, settings.checkLimit);
 	refresh();
