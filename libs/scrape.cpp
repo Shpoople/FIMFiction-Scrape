@@ -61,7 +61,9 @@ bool checkStory(int id) {
 	
 	//Get story API data
 	sprintf(scrapeUrl, "http://www.fimfiction.net/api/story.php?story=%i", id);
-	APIData = dataFetch(scrapeUrl);
+	std::string dataString = dataFetch(scrapeUrl);
+	APIData = dataString.c_str();
+	
 	delete[] scrapeUrl;
 	
 	//If it is 0, then we must not have it in our Database...
@@ -373,7 +375,7 @@ bool scrapeStory(int id, const char *data, int scrape) {
 						threads.append(chapterNum, chapTitle, chapUrl, lastCached, lastUpdated);
 					} else {
 						//Fetch data from chapter url
-						std::string rawData(dataFetch(chapUrl));
+						std::string rawData = dataFetch(chapUrl);
 						std::string chapData;
 						std::string strTitle(chapTitle);
 						
@@ -564,7 +566,8 @@ void scrapeExtraTags(int id) {
 	char *scrapeUrl = new char[100];
 	
 	sprintf(scrapeUrl, "http://www.fimfiction.net/story/%i", id);
-	storyData = dataFetch(scrapeUrl);
+	std::string dataString = dataFetch(scrapeUrl).c_str();
+	storyData = dataString.c_str();
 	
 	//regex expression and matching objects
 	std::string raw(storyData);
@@ -722,7 +725,7 @@ void threadDL(int id, int chapNumber, const char *chapTitle, const char *chapUrl
 	//refresh();
 	
 	//Fetch data from chapter url
-	std::string rawData(dataFetch(chapUrl));
+	std::string rawData = dataFetch(chapUrl);
 	std::string chapData;
 	std::string strTitle(chapTitle);
 					

@@ -1,5 +1,3 @@
-std::string readBuffer;
-
 static size_t WriteCallback(void *contents, size_t size, size_t nmemb, void *userp){
     ((std::string*)userp)->append((char*)contents, size * nmemb);
     return size * nmemb;
@@ -31,7 +29,9 @@ void setFileExt(const char *baseFilename, const char file[8]) {
 	rename(baseFilename , filename);
 }
 
-const char *dataFetch(const char *url) {
+std::string dataFetch(const char *url) {
+	std::string readBuffer;
+	
 	CURL *curl;
 	CURLcode res;
 	readBuffer = "";
@@ -95,7 +95,7 @@ const char *dataFetch(const char *url) {
 				}
 			}
 		} else {
-			return readBuffer.c_str();
+			return readBuffer;
 		}
 	}
 
@@ -103,6 +103,8 @@ const char *dataFetch(const char *url) {
 }
 
 int dataSave(const char *url, const char *file) {
+	std::string readBuffer;
+	
 	CURL *curl;
 	CURLcode res;
 	FILE *fp;
