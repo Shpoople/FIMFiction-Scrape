@@ -1,12 +1,3 @@
-#define SAVE_NONE 0
-#define SAVE_THUMB 1
-#define SAVE_FULL 2
-#define SAVE_ALL 3
-
-#define SAVE_SQL 0
-#define SAVE_EBOOK 1
-#define SAVE_RAW 2
-
 prefs settings;
 
 void loadPrefs();
@@ -73,8 +64,8 @@ bool createPrefs() {
 	settings.checkStart = 1;
 	settings.checkLimit = 400000;
 	
-	settings.saveStories = SAVE_SQL;
-	settings.saveImages = SAVE_FULL;
+	settings.saveStories = save_sql;
+	settings.saveImages = save_all;
 	
 	settings.threads = 0;
 	
@@ -218,15 +209,15 @@ void storyPrefs() {
 	
 	switch(result) {
 		case 0: //save as SQL database
-			settings.saveStories = SAVE_SQL;
+			settings.saveStories = save_sql;
 			break;
 		
 		case 1: //Save as eBook
-			settings.saveStories = SAVE_EBOOK;
+			settings.saveStories = save_ebook;
 			break;
 
 		case 2: //Save as raw story
-			settings.saveStories = SAVE_RAW;
+			settings.saveStories = save_raw;
 			break;
 	}
 }
@@ -238,19 +229,19 @@ void imagePrefs() {
 	
 	switch(result) {
 		case 0: //Do not save images
-			settings.saveImages = SAVE_NONE;
+			settings.saveImages = save_none;
 			break;
 		
 		case 1: //Save thumbs
-			settings.saveImages = SAVE_THUMB;
+			settings.saveImages = save_thumb;
 			break;
 
 		case 2: //Save fullsize
-			settings.saveImages = SAVE_FULL;
+			settings.saveImages = save_full;
 			break;
 
 		case 3: //Save All
-			settings.saveImages = SAVE_ALL;
+			settings.saveImages = save_all;
 			break;
 	}
 }

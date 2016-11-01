@@ -1,7 +1,4 @@
-#define NOTSTARTED 0
-#define STARTED 1
-#define FINISHED 2
-#define ERROR 3
+enum response {not_started, started, finished, error};
 
 class threadPool {
 	public:
@@ -9,16 +6,16 @@ class threadPool {
 		~threadPool();
 		void append(int chapNumber, const char *chapTitle, const char *chapUrl, int lastUpdated, int updated);
 		void execute(int threads);
-		void finish(int thread, int status);
+		void finish(int thread, response status);
 		
-		int finished = 0;
+		int finishedAll = 0;
 	private:
 		int _id;
 		int _chapters;
 		
 		//Thread stuff
 		std::thread *t;
-		int *threadStatus;
+		response *threadStatus;
 		
 		//Storage stuff
 		const char **_chapTitle;
@@ -42,16 +39,6 @@ bool checkStory(int id) {
 	const char *APIData;
 	char *scrapeUrl = new char[100];
 	
-	//Special exceptions
-	if (id == 165939) {
-		//iloveportalz0r has broken the API
-		printw("Skipping story 165939, because wtf iloveportalz0r, you broke the API...\n");
-		setStoryStatus(id, 5, 0);
-		refresh();
-		
-		return 0;
-	}
-	
 	//Fluff
 	printw("Checking status of story %i of %i... ", id, settings.checkLimit);
 	refresh();
@@ -63,13 +50,13 @@ bool checkStory(int id) {
 	sprintf(scrapeUrl, "http://www.fimfiction.net/api/story.php?story=%i", id);
 	std::string dataString = dataFetch(scrapeUrl);
 	APIData = dataString.c_str();
-	
+
 	delete[] scrapeUrl;
 	
 	//If it is 0, then we must not have it in our Database...
 	if (!state) {
 		scrapeState(APIData, state, updated);
-		
+			
 		//Set the new state
 		setStoryStatus(id, state, updated);
 		
@@ -289,7 +276,12 @@ bool scrapeStory(int id, const char *data, int scrape) {
 		full_image = "";
 	}
 	
-	const char *stateString = v.get("story").get("status").get<std::string>().c_str();
+	const char *stateString;
+	if (!v.get("story").get("status").is<picojson::null>()) {
+		stateString = v.get("story").get("status").get<std::string>().c_str();
+	} else {
+		stateString = "Error";
+	}
 		
 	if (!strcmp(stateString, "Complete"))
 		story.status = 1;
@@ -302,6 +294,10 @@ bool scrapeStory(int id, const char *data, int scrape) {
 			
 	if (!strcmp(stateString, "Cancelled"))
 		story.status = 4;
+		
+	if (!strcmp(stateString, "Error"))
+		story.status = 0;
+		//We cannot, for some reason, get the story status
 	
 	story.author = v.get("story").get("author").get("name").get<std::string>().c_str();
 	
@@ -335,8 +331,8 @@ bool scrapeStory(int id, const char *data, int scrape) {
 	
 	//Alright, now we can...
 	//Save the story data itself.
-	if (!settings.saveStories == SAVE_SQL) {
-		if (settings.saveStories == SAVE_RAW) {
+	if (!settings.saveStories == save_sql) {
+		if (settings.saveStories == save_raw) {
 			//Save as raw text
 			sprintf(filename, "stories/%i.txt", id);
 			sprintf(storyUrl, "http://www.fimfiction.net/download_story.php?story=%i", id);
@@ -402,7 +398,7 @@ bool scrapeStory(int id, const char *data, int scrape) {
 			if (settings.threads) {
 				//Execute threads and wait until they're finished
 				threads.execute(settings.threads);
-				while(!threads.finished);
+				while(!threads.finishedAll);
 			}
 		} else {
 			//Story is empty, what's the use in doing anything else?
@@ -420,7 +416,7 @@ bool scrapeStory(int id, const char *data, int scrape) {
 	if (scrape) {
 		//Save thumbnail image
 		if (strcmp(image, "") && scrape == true) {
-			if (settings.saveImages == SAVE_THUMB || settings.saveImages == SAVE_ALL) {
+			if (settings.saveImages == save_thumb || settings.saveImages == save_all) {
 				sprintf(filename, "images/thumb/thumb_%i", id);
 				
 				dataSave(image, filename);
@@ -434,7 +430,7 @@ bool scrapeStory(int id, const char *data, int scrape) {
 		
 		//Save fullsize image
 		if (strcmp(full_image, "") && scrape == true) {
-			if (settings.saveImages == SAVE_FULL || settings.saveImages == SAVE_ALL) {
+			if (settings.saveImages == save_full || settings.saveImages == save_all) {
 				sprintf(filename, "images/story_%i", id);
 				
 				dataSave(full_image, filename);
@@ -541,6 +537,14 @@ void scrapeState(const char *data, int &state, int &updated) {
 		
 	} else {
 		//It's not as simple as that. We must go deeper...
+		if (v.get("story").get("status").is<picojson::null>()) {
+			//We will default to "Incomplete" for broken stories.
+			//I'm looking at you, iloveportalz0r.
+			state = 2;
+			return;
+		}
+		
+		//Now get the state string
 		const char *stateString = v.get("story").get("status").get<std::string>().c_str();
 		updated = (int)v.get("story").get("date_modified").get<double>();
 		
@@ -633,13 +637,15 @@ void sanitize(std::string &str) {
 ///////////////////////////////////////////
 /////MULTI-THREAD OPERATION////////////////
 ///////////////////////////////////////////
+
+
 threadPool::threadPool(int id, int chapters) {
 	//Create and assign shit
 	this->_id = id;
 	this->_chapters = chapters;
 	
 	this->t = new std::thread[chapters];
-	this->threadStatus = new int[chapters];
+	this->threadStatus = new response[chapters];
 	
 
 	this->_chapTitle = new const char*[chapters];
@@ -648,7 +654,7 @@ threadPool::threadPool(int id, int chapters) {
 	this->_updated = new int[chapters];
 	
 	for (int i = 0; i < chapters; i++) {
-		this->threadStatus[i] = NOTSTARTED;
+		this->threadStatus[i] = not_started;
 	}
 }
 
@@ -678,7 +684,7 @@ void threadPool::execute(int threads) {
 		
 		for (int i = 0; i < this->_chapters; ++i) {
 			t[i] = std::thread(threadDL, this->_id, i, this->_chapTitle[i], this->_chapUrl[i], this->_lastUpdated[i], this->_updated[i], this);
-			this->threadStatus[i] = STARTED;
+			this->threadStatus[i] = started;
 			t[i].detach();
 		}
 	} else {
@@ -686,22 +692,22 @@ void threadPool::execute(int threads) {
 		
 		for (int i = 0; i < threads; ++i) {
 			t[i] = std::thread(threadDL, this->_id, i, this->_chapTitle[i], this->_chapUrl[i], this->_lastUpdated[i], this->_updated[i], this);
-			this->threadStatus[i] = STARTED;
+			this->threadStatus[i] = started;
 			t[i].detach();
 		}
 	}
 }
 
-void threadPool::finish(int thread, int status) {
+void threadPool::finish(int thread, response status) {
 	this->threadStatus[thread] = status;
 	int finishedThreads = 0;
 	
 	//Now we look for an unstarted thread, and execute it if there is
 	for (int i = 0; i < this->_chapters; i++) {
-		if (this->threadStatus[i] == NOTSTARTED) {
+		if (this->threadStatus[i] == not_started) {
 			t[i] = std::thread(threadDL, this->_id, i, this->_chapTitle[i], this->_chapUrl[i], this->_lastUpdated[i], this->_updated[i], this);
 			t[i].detach();
-			this->threadStatus[i] = STARTED;
+			this->threadStatus[i] = started;
 			
 			return;
 		}
@@ -709,14 +715,14 @@ void threadPool::finish(int thread, int status) {
 	
 	//Now we check to see if there are any threads still running
 	for (int n = 0; n < this->_chapters; n++) {
-		if (this->threadStatus[n] == FINISHED || this->threadStatus[n] == ERROR) {
+		if (this->threadStatus[n] == finished || this->threadStatus[n] == error) {
 			finishedThreads++;
 		}
 	}
 	
 	//If there isn't, then we're all finished
 	if (finishedThreads == this->_chapters) {
-		this->finished = 1;
+		this->finishedAll = 1;
 	}
 }
 
@@ -725,6 +731,7 @@ void threadDL(int id, int chapNumber, const char *chapTitle, const char *chapUrl
 	//refresh();
 	
 	//Fetch data from chapter url
+	//If you're wondering about it, I haven't gotten around to making the function return errors to the threadpool itself.
 	std::string rawData = dataFetch(chapUrl);
 	std::string chapData;
 	std::string strTitle(chapTitle);
@@ -745,5 +752,5 @@ void threadDL(int id, int chapNumber, const char *chapTitle, const char *chapUrl
 	}
 	
 	usleep(chapNumber*200);
-	pool->finish(chapNumber, FINISHED);
+	pool->finish(chapNumber, finished);
 }

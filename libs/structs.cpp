@@ -1,3 +1,7 @@
+enum save_image {save_none, save_thumb, save_full, save_all};
+
+enum save_story {save_sql, save_ebook, save_raw};
+
 struct prefs {
 	bool saveCompleted;
 	bool saveIncomplete;
@@ -15,8 +19,8 @@ struct prefs {
 	int checkStart;
 	int checkLimit;
 	
-	int saveStories;
-	int saveImages;
+	save_story saveStories;
+	save_image saveImages;
 	
 	int threads;
 };
