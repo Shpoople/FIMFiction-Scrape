@@ -186,11 +186,14 @@ void closeDatabases() {
 int findLastStory() {
 	char *ErrMsg = 0;
 	int RespCode;
-	char *sql = new char[1000];
 	
-	sprintf(sql, "SELECT `storyid` FROM `list` ORDER BY `storyid` DESC LIMIT 1;");
+	std::stringstream ss;
+
+	ss << "SELECT `storyid` FROM `list` ORDER BY `storyid` DESC LIMIT 1;";
+
+	std::string sql = ss.str();
 	
-	RespCode = sqlite3_exec(listDB, (const char*)sql, lastStoryCallback, 0, &ErrMsg);
+	RespCode = sqlite3_exec(listDB, sql.c_str(), lastStoryCallback, 0, &ErrMsg);
 	
 	if( RespCode != SQLITE_OK ){
 		printw("API SQL error: %s\n", ErrMsg);
@@ -202,8 +205,6 @@ int findLastStory() {
 		//printw("Success!\n");
 		//refresh();
 	}
-	
-	delete[] sql;
 	
 	return storyStatus[0];
 }
@@ -211,11 +212,14 @@ int findLastStory() {
 int setStoryStatus(int id, int result, int updated) {
 	char *ErrMsg = 0;
 	int RespCode;
-	char *sql = new char[1000];
 	
-	sprintf(sql, "INSERT INTO `list` (`storyid`, `result`, `updated`) VALUES (%i, %i, %i);", id, result, updated);
+	std::stringstream ss;
+
+	ss << "INSERT INTO `list` (`storyid`, `result`, `updated`) VALUES (" << id << ", " << result << ", " << updated << ");";
+
+	std::string sql = ss.str();
 	
-	RespCode = sqlite3_exec(listDB, (const char*)sql, NULL, 0, &ErrMsg);
+	RespCode = sqlite3_exec(listDB, sql.c_str(), NULL, 0, &ErrMsg);
 	
 	if( RespCode != SQLITE_OK ){
 		printw("API SQL error: %s\n", ErrMsg);
@@ -227,8 +231,6 @@ int setStoryStatus(int id, int result, int updated) {
 		//printw("Success!\n");
 		//refresh();
 	}
-	
-	delete[] sql;
 	
 	return 1;
 }
@@ -236,11 +238,14 @@ int setStoryStatus(int id, int result, int updated) {
 int updateStoryStatus(int id, int result, int updated) {
 	char *ErrMsg = 0;
 	int RespCode;
-	char *sql = new char[1000];
 	
-	sprintf(sql, "UPDATE `list` SET `result`=%i, `updated`=%i WHERE `storyid`=%i;", result, updated, id);
+	std::stringstream ss;
+
+	ss << "UPDATE `list` SET `result`=" << result << ", `updated`=" << updated << " WHERE `storyid`=" << id << ";";
+
+	std::string sql = ss.str();
 	
-	RespCode = sqlite3_exec(listDB, (const char*)sql, NULL, 0, &ErrMsg);
+	RespCode = sqlite3_exec(listDB, sql.c_str(), NULL, 0, &ErrMsg);
 	
 	if( RespCode != SQLITE_OK ){
 		printw("API SQL error: %s\n", ErrMsg);
@@ -253,22 +258,23 @@ int updateStoryStatus(int id, int result, int updated) {
 		//refresh();
 	}
 	
-	delete[] sql;
-	
 	return 1;
 }
 
 void checkStoryStatus(int id, int &status, int &updated) {
 	char *ErrMsg = 0;
 	int RespCode;
-	char *sql = new char[1000];
 	
 	storyStatus[0] = 0;
 	storyStatus[1] = 0;
 	
-	sprintf(sql, "SELECT `result`, `updated` FROM `list` WHERE `storyid`=%i LIMIT 1;", id);
+	std::stringstream ss;
+
+	ss << "SELECT `result`, `updated` FROM `list` WHERE `storyid`=" << id << " LIMIT 1;";
+
+	std::string sql = ss.str();
 	
-	RespCode = sqlite3_exec(listDB, (const char*)sql, storyCheckCallback, 0, &ErrMsg);
+	RespCode = sqlite3_exec(listDB, sql.c_str(), storyCheckCallback, 0, &ErrMsg);
 	
 	if( RespCode != SQLITE_OK ){
 		printw("API SQL error: %s\n", ErrMsg);
@@ -284,8 +290,6 @@ void checkStoryStatus(int id, int &status, int &updated) {
 	status = storyStatus[0];
 	updated = storyStatus[1];
 	
-	delete[] sql;
-	
 	//printw("Database is reporting status of %i, and update date of %i\n", storyStatus[0], storyStatus[1]);
 	//refresh();
 }
@@ -293,11 +297,14 @@ void checkStoryStatus(int id, int &status, int &updated) {
 int saveStorySQL(int id, storySQL *story) {
 	char *ErrMsg = 0;
 	int RespCode;
-	char *sql = new char[10000];
 	
-	sprintf(sql, "INSERT INTO `stories` (`storyid`, `title`, `author`, `desc`, `short_desc`, `image`, `full_image`, `status`, `modified`, `rating`, `chapters`) VALUES (%i, '%s', '%s', '%s', '%s', '%s', '%s', %i, %i, %i, %i);", id, story->title, story->author, story->desc, story->short_desc, story->image, story->full_image, story->status, story->modified, story->rating, story->chapters);
+	std::stringstream ss;
+
+	ss << "INSERT INTO `stories` (`storyid`, `title`, `author`, `desc`, `short_desc`, `image`, `full_image`, `status`, `modified`, `rating`, `chapters`) VALUES (" << id << ", '" << story->title << "', '" << story->author << "', '" << story->desc << "', '" << story->short_desc << "', '" << story->image << "', '" << story->full_image << "', " << story->status << ", " << story->modified << ", " << story->rating << ", " << story->chapters << ");";
+
+	std::string sql = ss.str();
 	
-	RespCode = sqlite3_exec(storyDB, (const char*)sql, NULL, 0, &ErrMsg);
+	RespCode = sqlite3_exec(storyDB, sql.c_str(), NULL, 0, &ErrMsg);
 	
 	if( RespCode != SQLITE_OK ){
 		printw("Story SQL error: %s\n", ErrMsg);
@@ -310,8 +317,6 @@ int saveStorySQL(int id, storySQL *story) {
 		//refresh();
 	}
 	refresh();
-	
-	delete[] sql;
 	
 	return 1;
 }
@@ -319,14 +324,14 @@ int saveStorySQL(int id, storySQL *story) {
 int updateStorySQL(int id, storySQL *story) {
 	char *ErrMsg = 0;
 	int RespCode;
-	char *sql = new char[10000];
 	
-	//sprintf(sql, "UPDATE `list` SET `result`=%i, `updated`=%i WHERE `storyid`=%i;", result, updated, id);
-	//`storyid`, 
+	std::stringstream ss;
+
+	ss << "UPDATE `stories` SET `title`='" << story->title << "', `author`='" << story->author << "', `desc`='" << story->desc << "', `short_desc`='" << story->short_desc << "', `image`='" << story->image << "', `full_image`='" << story->full_image << "', `status`=" << story->status << ", `modified`=" << story->modified << ", `rating`=" << story->rating << ", `chapters`=" << story->chapters << " WHERE `storyid`=" << id << ";";
+
+	std::string sql = ss.str();
 	
-	sprintf(sql, "UPDATE `stories` SET `title`='%s', `author`='%s', `desc`='%s', `short_desc`='%s', `image`='%s', `full_image`='%s', `status`=%i, `modified`=%i, `rating`=%i, `chapters`=%i WHERE `storyid`=%i;", story->title, story->author, story->desc, story->short_desc, story->image, story->full_image, story->status, story->modified, story->rating, story->chapters, id);
-	
-	RespCode = sqlite3_exec(storyDB, (const char*)sql, NULL, 0, &ErrMsg);
+	RespCode = sqlite3_exec(storyDB, sql.c_str(), NULL, 0, &ErrMsg);
 	
 	if( RespCode != SQLITE_OK ){
 		printw("Story SQL error: %s\n", ErrMsg);
@@ -340,22 +345,23 @@ int updateStorySQL(int id, storySQL *story) {
 	}
 	refresh();
 	
-	delete[] sql;
-	
 	return 1;
 }
 
 void checkChapterStatus(int id, int chapterNum, int &updated) {
 	char *ErrMsg = 0;
 	int RespCode;
-	char *sql = new char[1000];
 	
 	storyStatus[0] = 0;
 	storyStatus[1] = 0;
 	
-	sprintf(sql, "SELECT `updated` FROM `chapters` WHERE `parentid`=%i AND `chapterid`=%i LIMIT 1;", id, chapterNum);
+	std::stringstream ss;
+
+	ss << "SELECT `updated` FROM `chapters` WHERE `parentid`=" << id << " AND `chapterid`=" << chapterNum << " LIMIT 1;";
+
+	std::string sql = ss.str();
 	
-	RespCode = sqlite3_exec(storyDB, (const char*)sql, chapterCheckCallback, 0, &ErrMsg);
+	RespCode = sqlite3_exec(storyDB, sql.c_str(), chapterCheckCallback, 0, &ErrMsg);
 	
 	if( RespCode != SQLITE_OK ){
 		printw("API SQL error: %s\n", ErrMsg);
@@ -370,8 +376,6 @@ void checkChapterStatus(int id, int chapterNum, int &updated) {
 	
 	updated = chapterStatus;
 	
-	delete[] sql;
-	
 	//printw("Database is reporting chapter update date of %i\n", chapterStatus);
 	//refresh();
 }
@@ -379,11 +383,14 @@ void checkChapterStatus(int id, int chapterNum, int &updated) {
 int saveChapterSQL(int id, int chapter, int updated, const char *title, const char *body) {
 	char *ErrMsg = 0;
 	int RespCode;
-	char *sql = new char[2000000];
 	
-	sprintf(sql, "INSERT INTO `chapters` (`parentid`, `chapterid`, `updated`, `title`, `body`) VALUES (%i, %i, %i, '%s', '%s');", id, chapter, updated, title, body);
+	std::stringstream ss;
+
+	ss << "INSERT INTO `chapters` (`parentid`, `chapterid`, `updated`, `title`, `body`) VALUES (" << id << ", " << chapter << ", " << updated << ", '" << title << "', '" << body << "');";
+
+	std::string sql = ss.str();
 	
-	RespCode = sqlite3_exec(storyDB, (const char*)sql, NULL, 0, &ErrMsg);
+	RespCode = sqlite3_exec(storyDB, sql.c_str(), NULL, 0, &ErrMsg);
 	
 	if( RespCode != SQLITE_OK ){
 		printw("Chapter %i SQL error: %s\n", chapter, ErrMsg);
@@ -395,8 +402,6 @@ int saveChapterSQL(int id, int chapter, int updated, const char *title, const ch
 		//printw("Success! %s, %i\n", title, strlen(sql));
 		//refresh();
 	}
-	
-	delete[] sql;
 	
 	return 1;
 }
@@ -404,13 +409,14 @@ int saveChapterSQL(int id, int chapter, int updated, const char *title, const ch
 int updateChapterSQL(int id, int chapter, int updated, const char *title, const char *body) {
 	char *ErrMsg = 0;
 	int RespCode;
-	char *sql = new char[2000000];
 	
-	//sprintf(sql, "UPDATE `list` SET `result`=%i, `updated`=%i WHERE `storyid`=%i;", result, updated, id);
+	std::stringstream ss;
+
+	ss << "UPDATE `chapters`  SET `updated`=" << updated << ", `title`='" << title << "', `body`='" << body << "' WHERE `parentid`=" << id << " AND `chapterid`=" << chapter << ";";
+
+	std::string sql = ss.str();
 	
-	sprintf(sql, "UPDATE `chapters`  SET `updated`=%i, `title`='%s', `body`='%s' WHERE `parentid`=%i AND `chapterid`=%i;", updated, title, body, id, chapter);
-	
-	RespCode = sqlite3_exec(storyDB, (const char*)sql, NULL, 0, &ErrMsg);
+	RespCode = sqlite3_exec(storyDB, sql.c_str(), NULL, 0, &ErrMsg);
 	
 	if( RespCode != SQLITE_OK ){
 		printw("Chapter %i SQL error: %s\n", chapter, ErrMsg);
@@ -423,19 +429,20 @@ int updateChapterSQL(int id, int chapter, int updated, const char *title, const 
 		//refresh();
 	}
 	
-	delete[] sql;
-	
 	return 1;
 }
 
 int addTagSQL(int id, int tag) {
 	char *ErrMsg = 0;
 	int RespCode;
-	char *sql = new char[1000];
-			
-	sprintf(sql, "INSERT INTO `tags` (`story`, `tag`) VALUES (%i, %i);", id, tag);
 	
-	RespCode = sqlite3_exec(storyDB, (const char*)sql, NULL, 0, &ErrMsg);
+	std::stringstream ss;
+
+	ss << "INSERT INTO `tags` (`story`, `tag`) VALUES (" << id << ", " << tag << ");";
+
+	std::string sql = ss.str();
+	
+	RespCode = sqlite3_exec(storyDB, sql.c_str(), NULL, 0, &ErrMsg);
 	
 	if( RespCode != SQLITE_OK ){
 		printw("Tag SQL error: %s\n", ErrMsg);
@@ -448,8 +455,6 @@ int addTagSQL(int id, int tag) {
 		//refresh();
 	}
 	refresh();
-	
-	delete[] sql;
 	
 	return 1;
 }
@@ -457,11 +462,14 @@ int addTagSQL(int id, int tag) {
 int addExtraTagSQL(int id, std::string extra) {
 	char *ErrMsg = 0;
 	int RespCode;
-	char *sql = new char[1000];
-			
-	sprintf(sql, "INSERT INTO `tags` (`story`, `tag`, `extra`) VALUES (%i, 0, '%s');", id, extra.c_str());
 	
-	RespCode = sqlite3_exec(storyDB, (const char*)sql, NULL, 0, &ErrMsg);
+	std::stringstream ss;
+
+	ss << "INSERT INTO `tags` (`story`, `tag`, `extra`) VALUES (" << id << ", 0, '" << extra.c_str() << "');";
+
+	std::string sql = ss.str();
+	
+	RespCode = sqlite3_exec(storyDB, sql.c_str(), NULL, 0, &ErrMsg);
 	
 	if( RespCode != SQLITE_OK ){
 		printw("Tag SQL error: %s\n", ErrMsg);
@@ -475,22 +483,23 @@ int addExtraTagSQL(int id, std::string extra) {
 	}
 	refresh();
 	
-	delete[] sql;
-	
 	return 1;
 }
 
 int deleteStorySQL(int id) {
 	char *ErrMsg = 0;
 	int RespCode;
-	char *sql = new char[1000];
+	std::stringstream ss;
+	std::string sql;
 	
 	printw("Deleting incomplete data for story %i... ", id);
 	refresh();
 			
 	//DELETE ENTRY FROM STORY LIST
-	sprintf(sql, "DELETE FROM `list` WHERE `storyid`=%i;", id);
-	RespCode = sqlite3_exec(listDB, (const char*)sql, NULL, 0, &ErrMsg);
+	ss << "DELETE FROM `list` WHERE `storyid`=" << id << ";";
+
+	sql = ss.str();
+	RespCode = sqlite3_exec(listDB, sql.c_str(), NULL, 0, &ErrMsg);
 	
 	if( RespCode != SQLITE_OK ){
 		printw("List SQL error: %s\n", ErrMsg);
@@ -502,8 +511,11 @@ int deleteStorySQL(int id) {
 	refresh();
 	
 	//DELETE ENTRY FROM STORY DATABASE
-	sprintf(sql, "DELETE FROM `stories` WHERE `storyid`=%i;", id);
-	RespCode = sqlite3_exec(storyDB, (const char*)sql, NULL, 0, &ErrMsg);
+	ss << "DELETE FROM `stories` WHERE `storyid`=" << id << ";";
+
+	sql = ss.str();
+	
+	RespCode = sqlite3_exec(storyDB, sql.c_str(), NULL, 0, &ErrMsg);
 	
 	if( RespCode != SQLITE_OK ){
 		printw("Story SQL error: %s\n", ErrMsg);
@@ -515,8 +527,11 @@ int deleteStorySQL(int id) {
 	refresh();
 	
 	//DELETE ENTRIES FROM TAG DATABASE
-	sprintf(sql, "DELETE FROM `tags` WHERE `story`=%i;", id);
-	RespCode = sqlite3_exec(storyDB, (const char*)sql, NULL, 0, &ErrMsg);
+	ss << "DELETE FROM `tags` WHERE `story`=" << id << ";";
+
+	sql = ss.str();
+	
+	RespCode = sqlite3_exec(storyDB, sql.c_str(), NULL, 0, &ErrMsg);
 	
 	if( RespCode != SQLITE_OK ){
 		printw("Tag SQL error: %s\n", ErrMsg);
@@ -528,8 +543,11 @@ int deleteStorySQL(int id) {
 	refresh();
 	
 	//DELETE ENTRY FROM STORY DATABASE
-	sprintf(sql, "DELETE FROM `chapters` WHERE `parentid`=%i;", id);
-	RespCode = sqlite3_exec(storyDB, (const char*)sql, NULL, 0, &ErrMsg);
+	ss << "DELETE FROM `chapters` WHERE `parentid`=" << id << ";";
+
+	sql = ss.str();
+	
+	RespCode = sqlite3_exec(storyDB, sql.c_str(), NULL, 0, &ErrMsg);
 	
 	if( RespCode != SQLITE_OK ){
 		printw("Chapter SQL error: %s\n", ErrMsg);
@@ -541,8 +559,6 @@ int deleteStorySQL(int id) {
 	
 	printf("Done.\n");
 	refresh();
-	
-	delete[] sql;
 	
 	return 1;
 }

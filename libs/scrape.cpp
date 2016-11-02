@@ -9,7 +9,7 @@ class threadPool {
 	public:
 		threadPool(int id, int chapters);
 		~threadPool();
-		void append(int chapNumber, const char *chapTitle, const char *chapUrl, int lastUpdated, int updated);
+		void append(int chapNumber, const char *chapTitle, std::string chapUrl, int lastUpdated, int updated);
 		void execute(int threads);
 		void finish(int thread, response status);
 		
@@ -23,13 +23,13 @@ class threadPool {
 		response *threadStatus;
 		
 		//Storage stuff
-		const char **_chapTitle;
-		const char **_chapUrl;
+		std::vector<std::string> _chapTitle;
+		std::vector<std::string> _chapUrl;
 		int *_lastUpdated;
 		int *_updated;
 };
 
-void threadDL(int id, int chapNumber, const char *chapTitle, const char *chapUrl, int lastUpdated, int updated, threadPool *pool);bool checkStory(int id);
+void threadDL(int id, int chapNumber, std::string chapTitle, std::string chapUrl, int lastUpdated, int updated, threadPool *pool);bool checkStory(int id);
 bool scrapeStory(int id, const char *data, int scrape);
 void scrapeState(const char *data, int &state, int &updated);
 void scrapeExtraTags(int id);
@@ -42,7 +42,6 @@ bool checkStory(int id) {
 	//just some simple variables
 	int state, updated, newdate, success, scrape = 0;
 	const char *APIData;
-	char *scrapeUrl = new char[100];
 	
 	//Fluff
 	printw("Checking status of story %i of %i... ", id, settings.checkLimit);
@@ -52,11 +51,9 @@ bool checkStory(int id) {
 	checkStoryStatus(id, state, updated);
 	
 	//Get story API data
-	sprintf(scrapeUrl, "http://www.fimfiction.net/api/story.php?story=%i", id);
+	std::string scrapeUrl = "http://www.fimfiction.net/api/story.php?story=" + std::to_string(id);
 	std::string dataString = dataFetch(scrapeUrl);
 	APIData = dataString.c_str();
-
-	delete[] scrapeUrl;
 	
 	//If it is 0, then we must not have it in our Database...
 	if (!state) {
@@ -295,7 +292,7 @@ bool scrapeStory(int id, const char *data, int scrape) {
 			
 			for (picojson::array::const_iterator iter = list.begin(); iter != list.end(); ++iter) {
 				const char *chapTitle = (*iter).get("title").get<std::string>().c_str();
-				const char *chapUrl = (*iter).get("link").get<std::string>().c_str();
+				std::string chapUrl = (*iter).get("link").get<std::string>().c_str();
 				int lastUpdated = (int)(*iter).get("date_modified").get<double>();
 				
 				//See if chapter has updated since we checked
@@ -509,15 +506,10 @@ void scrapeState(const char *data, int &state, int &updated) {
 }
 
 void scrapeExtraTags(int id) {
-	const char *storyData;
-	char *scrapeUrl = new char[100];
-	
-	sprintf(scrapeUrl, "http://www.fimfiction.net/story/%i", id);
-	std::string dataString = dataFetch(scrapeUrl).c_str();
-	storyData = dataString.c_str();
+	std::string scrapeUrl = "https://www.fimfiction.net/story/" + std::to_string(id);
 	
 	//regex expression and matching objects
-	std::string raw(storyData);
+	std::string raw = dataFetch(scrapeUrl);
 	raw.erase(std::remove(raw.begin(), raw.end(), '\n'), raw.end());
 	regex contRegex{"<div class=\"inner_data\">(.+?)<div class=\"story_stats\""};
 	smatch container;
@@ -542,8 +534,6 @@ void scrapeExtraTags(int id) {
 			addExtraTagSQL(id, charName);
 		}
 	}
-	
-	delete[] scrapeUrl;
 }
 
 void regexData(std::string s, std::string *ret) {
@@ -589,10 +579,6 @@ threadPool::threadPool(int id, int chapters) {
 	
 	this->t = new std::thread[chapters];
 	this->threadStatus = new response[chapters];
-	
-
-	this->_chapTitle = new const char*[chapters];
-	this->_chapUrl = new const char*[chapters];
 	this->_lastUpdated = new int[chapters];
 	this->_updated = new int[chapters];
 	
@@ -608,15 +594,12 @@ threadPool::~threadPool() {
 	
 	delete[] this->_lastUpdated;
 	delete[] this->_updated;
-	
-	delete[] this->_chapTitle;
-	delete[] this->_chapUrl;
 }
 
-void threadPool::append(int chapNumber, const char *chapTitle, const char *chapUrl, int lastUpdated, int updated) {
+void threadPool::append(int chapNumber, const char *chapTitle, std::string chapUrl, int lastUpdated, int updated) {
 	//Add chapter information to the queue
-	this->_chapTitle[chapNumber] = chapTitle;
-	this->_chapUrl[chapNumber] = chapUrl;
+	this->_chapTitle.emplace_back(chapTitle);
+	this->_chapUrl.emplace_back(chapUrl);
 	this->_updated[chapNumber] = updated;
 	this->_lastUpdated[chapNumber] = lastUpdated;
 }
@@ -669,10 +652,7 @@ void threadPool::finish(int thread, response status) {
 	}
 }
 
-void threadDL(int id, int chapNumber, const char *chapTitle, const char *chapUrl, int lastUpdated, int updated, threadPool *pool) {
-	//printw("Downloading chapter %i of story %i, %s\n", chapNumber, id, chapTitle);
-	//refresh();
-	
+void threadDL(int id, int chapNumber, std::string chapTitle, std::string chapUrl, int lastUpdated, int updated, threadPool *pool) {
 	//Fetch data from chapter url
 	//If you're wondering about it, I haven't gotten around to making the function return errors to the threadpool itself.
 	std::string rawData = dataFetch(chapUrl);
@@ -684,14 +664,14 @@ void threadDL(int id, int chapNumber, const char *chapTitle, const char *chapUrl
 					
 	//Strip of illegal characters, needs to be streamlined
 	sanitize(chapData);
-	sanitize(strTitle);
+	sanitize(chapTitle);
 					
 	//Save chapter to SQL
 	if (lastUpdated == 0) {
 		//We have never checked this chapter before.
-		saveChapterSQL(id, chapNumber, updated, strTitle.c_str(), chapData.c_str());
+		saveChapterSQL(id, chapNumber, updated, chapTitle.c_str(), chapData.c_str());
 	} else {
-		updateChapterSQL(id, chapNumber, lastUpdated, strTitle.c_str(), chapData.c_str());
+		updateChapterSQL(id, chapNumber, lastUpdated, chapTitle.c_str(), chapData.c_str());
 	}
 	
 	usleep(chapNumber*200);

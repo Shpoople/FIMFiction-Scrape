@@ -29,7 +29,7 @@ void setFileExt(const char *baseFilename, const char file[8]) {
 	rename(baseFilename , filename);
 }
 
-std::string dataFetch(const char *url) {
+std::string dataFetch(std::string url) {
 	std::string readBuffer;
 	
 	CURL *curl;
@@ -44,7 +44,7 @@ std::string dataFetch(const char *url) {
 
 	curl = curl_easy_init();
 	if(curl) {
-		curl_easy_setopt(curl, CURLOPT_URL, url);
+		curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
 		curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteCallback);
 		curl_easy_setopt(curl, CURLOPT_WRITEDATA, &readBuffer);
 		curl_easy_setopt(curl, CURLOPT_COOKIEFILE, "");
