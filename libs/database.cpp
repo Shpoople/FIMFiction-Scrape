@@ -186,12 +186,8 @@ void closeDatabases() {
 int findLastStory() {
 	char *ErrMsg = 0;
 	int RespCode;
-	
-	std::stringstream ss;
 
-	ss << "SELECT `storyid` FROM `list` ORDER BY `storyid` DESC LIMIT 1;";
-
-	std::string sql = ss.str();
+	std::string sql = "SELECT `storyid` FROM `list` ORDER BY `storyid` DESC LIMIT 1;";
 	
 	RespCode = sqlite3_exec(listDB, sql.c_str(), lastStoryCallback, 0, &ErrMsg);
 	

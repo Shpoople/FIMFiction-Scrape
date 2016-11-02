@@ -1,3 +1,5 @@
+std::vector<std::string> tags = {"2nd Person", "Adventure", "Alternate Universe", "Anthro", "Comedy", "Crossover", "Dark", "Drama", "Equestria Girls", "Horror", "Human", "Mystery", "Random", "Romance", "Sad", "Sci-Fi", "Slice of Life", "Thriller", "Tragedy"};
+
 enum class response {
 	not_started,
 	started,
@@ -223,21 +225,19 @@ bool scrapeStory(int id, const char *data, int scrape) {
 		stateString = "Error";
 	}
 		
-	if (!strcmp(stateString, "Complete"))
+	if (!strcmp(stateString, "Complete")) {
 		story.status = 1;
-			
-	if (!strcmp(stateString, "Incomplete"))
+	} else if (!strcmp(stateString, "Incomplete")) {
 		story.status = 2;
-				
-	if (!strcmp(stateString, "On Hiatus"))
+	} else if (!strcmp(stateString, "On Hiatus")) {
 		story.status = 3;
-			
-	if (!strcmp(stateString, "Cancelled"))
+	} else if (!strcmp(stateString, "Cancelled")) {
 		story.status = 4;
-		
-	if (!strcmp(stateString, "Error"))
+	} else if (!strcmp(stateString, "Error")) {
 		story.status = 0;
-		//We cannot, for some reason, get the story status
+	}
+
+	//We cannot, for some reason, get the story status
 	
 	story.author = v.get("story").get("author").get("name").get<std::string>().c_str();
 	
@@ -400,45 +400,12 @@ bool scrapeStory(int id, const char *data, int scrape) {
 		sanitize(strAuthor);
 		story.author = strAuthor.c_str();
 		
-		//Categories
-		if (v.get("story").get("categories").get("2nd Person").get<bool>())
-			addTagSQL(id, 1);
-		if (v.get("story").get("categories").get("Adventure").get<bool>())
-			addTagSQL(id, 2);
-		if (v.get("story").get("categories").get("Alternate Universe").get<bool>())
-			addTagSQL(id, 3);
-		if (v.get("story").get("categories").get("Anthro").get<bool>())
-			addTagSQL(id, 4);
-		if (v.get("story").get("categories").get("Comedy").get<bool>())
-			addTagSQL(id, 5);
-		if (v.get("story").get("categories").get("Crossover").get<bool>())
-			addTagSQL(id, 6);
-		if (v.get("story").get("categories").get("Dark").get<bool>())
-			addTagSQL(id, 7);
-		if (v.get("story").get("categories").get("Drama").get<bool>())
-			addTagSQL(id, 8);
-		if (v.get("story").get("categories").get("Equestria Girls").get<bool>())
-			addTagSQL(id, 9);
-		if (v.get("story").get("categories").get("Horror").get<bool>())
-			addTagSQL(id, 10);
-		if (v.get("story").get("categories").get("Human").get<bool>())
-			addTagSQL(id, 11);
-		if (v.get("story").get("categories").get("Mystery").get<bool>())
-			addTagSQL(id, 12);
-		if (v.get("story").get("categories").get("Random").get<bool>())
-			addTagSQL(id, 13);
-		if (v.get("story").get("categories").get("Romance").get<bool>())
-			addTagSQL(id, 14);
-		if (v.get("story").get("categories").get("Sad").get<bool>())
-			addTagSQL(id, 15);
-		if (v.get("story").get("categories").get("Sci-Fi").get<bool>())
-			addTagSQL(id, 16);
-		if (v.get("story").get("categories").get("Slice of Life").get<bool>())
-			addTagSQL(id, 17);
-		if (v.get("story").get("categories").get("Thriller").get<bool>())
-			addTagSQL(id, 18);
-		if (v.get("story").get("categories").get("Tragedy").get<bool>())
-			addTagSQL(id, 19);
+		//Save all of the tags that the story has
+		for (size_t tag = 0; tag < tags.size(); tag++) {
+			if (v.get("story").get("categories").get(tags[tag].c_str()).get<bool>()) {
+				addTagSQL(id, tag + 1);
+			}
+		}
 			
 		//Since the FIMFiction API is such a piece of shit, we are forced to do this.
 		scrapeExtraTags(id);
@@ -488,17 +455,15 @@ void scrapeState(const char *data, int &state, int &updated) {
 		const char *stateString = v.get("story").get("status").get<std::string>().c_str();
 		updated = (int)v.get("story").get("date_modified").get<double>();
 		
-		if (!strcmp(stateString, "Complete"))
+		if (!strcmp(stateString, "Complete")) {
 			state = 1;
-			
-		if (!strcmp(stateString, "Incomplete"))
+		} else if (!strcmp(stateString, "Incomplete")) {
 			state = 2;
-				
-		if (!strcmp(stateString, "On Hiatus"))
+		} else if (!strcmp(stateString, "On Hiatus")) {
 			state = 3;
-			
-		if (!strcmp(stateString, "Cancelled"))
+		} else if (!strcmp(stateString, "Cancelled")) {
 			state = 4;
+		}
 	}
 	
 	//printw("API is reporting status of %i, and update date of %i\n", state, updated);
@@ -605,22 +570,16 @@ void threadPool::append(int chapNumber, const char *chapTitle, std::string chapU
 }
 
 void threadPool::execute(int threads) {
+	int maxThreads = threads;
 	if (this->_chapters < threads) {
 		//We have less chapters than threads, execute chapters directly
-		
-		for (int i = 0; i < this->_chapters; ++i) {
-			t[i] = std::thread(threadDL, this->_id, i, this->_chapTitle[i], this->_chapUrl[i], this->_lastUpdated[i], this->_updated[i], this);
-			this->threadStatus[i] = response::started;
-			t[i].detach();
-		}
-	} else {
-		//We have more chapters than threads, execute via thread number
-		
-		for (int i = 0; i < threads; ++i) {
-			t[i] = std::thread(threadDL, this->_id, i, this->_chapTitle[i], this->_chapUrl[i], this->_lastUpdated[i], this->_updated[i], this);
-			this->threadStatus[i] = response::started;
-			t[i].detach();
-		}
+		maxThreads = this->_chapters;
+	}
+	
+	for (int i = 0; i < maxThreads; ++i) {
+		t[i] = std::thread(threadDL, this->_id, i, this->_chapTitle[i], this->_chapUrl[i], this->_lastUpdated[i], this->_updated[i], this);
+		this->threadStatus[i] = response::started;
+		t[i].detach();
 	}
 }
 
