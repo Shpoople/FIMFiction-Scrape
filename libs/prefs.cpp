@@ -64,8 +64,8 @@ bool createPrefs() {
 	settings.checkStart = 1;
 	settings.checkLimit = 400000;
 	
-	settings.saveStories = save_sql;
-	settings.saveImages = save_all;
+	settings.saveStories = save_story::save_sql;
+	settings.saveImages = save_image::save_all;
 	
 	settings.threads = 0;
 	
@@ -83,7 +83,9 @@ bool createPrefs() {
 		sprintf(limitMenuDialog, "End at story %i", settings.checkLimit);
 		sprintf(threadMenuDialog, "Use %i cURL threads (0 = disabled)", settings.threads);
 		
-		result = printMenu("Set preferences", 9, "Set stories to be saved", "Set stories to be rechecked", ExplicitMenuOptions[settings.saveExplicit], startMenuDialog, limitMenuDialog, storyMenuOptions[settings.saveStories], ImageMenuOptions[settings.saveImages], threadMenuDialog, "Save preferences and return");
+		result = printMenu("Set preferences", 9, "Set stories to be saved", "Set stories to be rechecked", ExplicitMenuOptions[settings.saveExplicit], startMenuDialog, limitMenuDialog, storyMenuOptions[(int)settings.saveStories], ImageMenuOptions[(int)settings.saveImages], threadMenuDialog, "Save preferences and return");
+		
+		const char *respNum;
 		
 		switch(result) {
 			case 0: //Change story fetching prefrences
@@ -99,11 +101,13 @@ bool createPrefs() {
 				break;
 			
 			case 3: //Change story start prefrence
-				settings.checkStart = atoi(printInput("Set starting point for story check", true));
+				respNum = printInput("Set starting point for story check", true).c_str();
+				settings.checkStart = atoi(respNum);
 				break;
 				
 			case 4: //Change story limit prefrence
-				settings.checkLimit = atoi(printInput("Set limit for story check", true));
+				respNum = printInput("Set limit for story check", true).c_str();
+				settings.checkLimit = atoi(respNum);
 				break;
 			
 			case 5: //Change story fetching prefrences
@@ -115,7 +119,8 @@ bool createPrefs() {
 				break;
 				
 			case 7: //Exit prefrences menu
-				settings.threads = atoi(printInput("Set number of cURL threads to use", true));
+				respNum = printInput("Set number of cURL threads to use", true).c_str();
+				settings.threads = atoi(respNum);
 				break;
 				
 			case 8:
@@ -209,15 +214,15 @@ void storyPrefs() {
 	
 	switch(result) {
 		case 0: //save as SQL database
-			settings.saveStories = save_sql;
+			settings.saveStories = save_story::save_sql;
 			break;
 		
 		case 1: //Save as eBook
-			settings.saveStories = save_ebook;
+			settings.saveStories = save_story::save_ebook;
 			break;
 
 		case 2: //Save as raw story
-			settings.saveStories = save_raw;
+			settings.saveStories = save_story::save_raw;
 			break;
 	}
 }
@@ -229,19 +234,19 @@ void imagePrefs() {
 	
 	switch(result) {
 		case 0: //Do not save images
-			settings.saveImages = save_none;
+			settings.saveImages = save_image::save_none;
 			break;
 		
 		case 1: //Save thumbs
-			settings.saveImages = save_thumb;
+			settings.saveImages = save_image::save_thumb;
 			break;
 
 		case 2: //Save fullsize
-			settings.saveImages = save_full;
+			settings.saveImages = save_image::save_full;
 			break;
 
 		case 3: //Save All
-			settings.saveImages = save_all;
+			settings.saveImages = save_image::save_all;
 			break;
 	}
 }

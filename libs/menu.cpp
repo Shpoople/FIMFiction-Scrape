@@ -63,9 +63,7 @@ int printMenu(const char *title, int count, ...) {
 	return 0;
 }
 
-char *printInput(const char *title, bool integer = false) {
-	//I know this a memory leak, but I don't care.
-	//It's not like we're gonna be running this function a million times
+std::string printInput(const char *title, bool integer = false) {
 	char *str = new char[80];
 	
 	pistart:
@@ -90,6 +88,8 @@ char *printInput(const char *title, bool integer = false) {
 	printw(" >");
 	getnstr(str, 80);
 	
+	std::string ret(str);
+	
 	//Undo earler keypad mode and cursor visibility
 	keypad(stdscr, TRUE);
 	curs_set(0);
@@ -105,5 +105,7 @@ char *printInput(const char *title, bool integer = false) {
 		}
 	}
 	
-	return str;
+	delete[] str;
+	
+	return ret;
 }

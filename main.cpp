@@ -11,13 +11,7 @@
 #include <curl/curl.h>
 #include <boost/regex.hpp>
 #include <thread>
-
-#if defined(_WIN32)
-	#include <direct.h>
-#else 
-	#include <sys/stat.h>
-#endif
-
+#include <sys/stat.h>
 using namespace boost; 
 
 #include "libs/picojson.h"
@@ -29,17 +23,11 @@ using namespace boost;
 #include "libs/scrape.cpp"
 
 void makeDirs() {
-	#if defined(_WIN32)
-		_mkdir("db");
-		_mkdir("images");
-		_mkdir("images\thumb");
-		_mkdir("stories");
-	#else 
-		mkdir("db", 0777);
-		mkdir("images", 0777);
-		mkdir("images/thumb", 0777);
-		mkdir("stories", 0777);
-	#endif
+	//Will rework this later
+	mkdir("db", 0777);
+	mkdir("images", 0777);
+	mkdir("images/thumb", 0777);
+	mkdir("stories", 0777);
 }
 
 int main() {

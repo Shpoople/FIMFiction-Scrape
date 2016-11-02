@@ -132,7 +132,7 @@ bool createDatabases() {
 		refresh();
 	}
 	
-	if (settings.saveStories == save_sql) {
+	if (settings.saveStories == save_story::save_sql) {
 		chapterSql = "CREATE TABLE IF NOT EXISTS `chapters` (" \
 			"`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL," \
 			"`parentid` INTEGER NOT NULL," \

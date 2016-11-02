@@ -1,6 +1,15 @@
-enum save_image {save_none, save_thumb, save_full, save_all};
+enum class save_image {
+	save_none, 
+	save_thumb, 
+	save_full, 
+	save_all,
+};
 
-enum save_story {save_sql, save_ebook, save_raw};
+enum class save_story {
+	save_sql,
+	save_ebook,
+	save_raw,
+};
 
 struct prefs {
 	bool saveCompleted;

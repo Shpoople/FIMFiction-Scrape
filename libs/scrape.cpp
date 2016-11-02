@@ -1,4 +1,9 @@
-enum response {not_started, started, finished, error};
+enum class response {
+	not_started,
+	started,
+	finished,
+	error,
+};
 
 class threadPool {
 	public:
@@ -331,8 +336,8 @@ bool scrapeStory(int id, const char *data, int scrape) {
 	
 	//Alright, now we can...
 	//Save the story data itself.
-	if (!settings.saveStories == save_sql) {
-		if (settings.saveStories == save_raw) {
+	if (settings.saveStories != save_story::save_sql) {
+		if (settings.saveStories != save_story::save_raw) {
 			//Save as raw text
 			sprintf(filename, "stories/%i.txt", id);
 			sprintf(storyUrl, "http://www.fimfiction.net/download_story.php?story=%i", id);
@@ -416,7 +421,7 @@ bool scrapeStory(int id, const char *data, int scrape) {
 	if (scrape) {
 		//Save thumbnail image
 		if (strcmp(image, "") && scrape == true) {
-			if (settings.saveImages == save_thumb || settings.saveImages == save_all) {
+			if (settings.saveImages == save_image::save_thumb || settings.saveImages == save_image::save_all) {
 				sprintf(filename, "images/thumb/thumb_%i", id);
 				
 				dataSave(image, filename);
@@ -430,7 +435,7 @@ bool scrapeStory(int id, const char *data, int scrape) {
 		
 		//Save fullsize image
 		if (strcmp(full_image, "") && scrape == true) {
-			if (settings.saveImages == save_full || settings.saveImages == save_all) {
+			if (settings.saveImages == save_image::save_full || settings.saveImages == save_image::save_all) {
 				sprintf(filename, "images/story_%i", id);
 				
 				dataSave(full_image, filename);
@@ -654,7 +659,7 @@ threadPool::threadPool(int id, int chapters) {
 	this->_updated = new int[chapters];
 	
 	for (int i = 0; i < chapters; i++) {
-		this->threadStatus[i] = not_started;
+		this->threadStatus[i] = response::not_started;
 	}
 }
 
@@ -684,7 +689,7 @@ void threadPool::execute(int threads) {
 		
 		for (int i = 0; i < this->_chapters; ++i) {
 			t[i] = std::thread(threadDL, this->_id, i, this->_chapTitle[i], this->_chapUrl[i], this->_lastUpdated[i], this->_updated[i], this);
-			this->threadStatus[i] = started;
+			this->threadStatus[i] = response::started;
 			t[i].detach();
 		}
 	} else {
@@ -692,7 +697,7 @@ void threadPool::execute(int threads) {
 		
 		for (int i = 0; i < threads; ++i) {
 			t[i] = std::thread(threadDL, this->_id, i, this->_chapTitle[i], this->_chapUrl[i], this->_lastUpdated[i], this->_updated[i], this);
-			this->threadStatus[i] = started;
+			this->threadStatus[i] = response::started;
 			t[i].detach();
 		}
 	}
@@ -704,10 +709,10 @@ void threadPool::finish(int thread, response status) {
 	
 	//Now we look for an unstarted thread, and execute it if there is
 	for (int i = 0; i < this->_chapters; i++) {
-		if (this->threadStatus[i] == not_started) {
+		if (this->threadStatus[i] == response::not_started) {
 			t[i] = std::thread(threadDL, this->_id, i, this->_chapTitle[i], this->_chapUrl[i], this->_lastUpdated[i], this->_updated[i], this);
 			t[i].detach();
-			this->threadStatus[i] = started;
+			this->threadStatus[i] = response::started;
 			
 			return;
 		}
@@ -715,7 +720,7 @@ void threadPool::finish(int thread, response status) {
 	
 	//Now we check to see if there are any threads still running
 	for (int n = 0; n < this->_chapters; n++) {
-		if (this->threadStatus[n] == finished || this->threadStatus[n] == error) {
+		if (this->threadStatus[n] == response::finished || this->threadStatus[n] == response::error) {
 			finishedThreads++;
 		}
 	}
@@ -752,5 +757,5 @@ void threadDL(int id, int chapNumber, const char *chapTitle, const char *chapUrl
 	}
 	
 	usleep(chapNumber*200);
-	pool->finish(chapNumber, finished);
+	pool->finish(chapNumber, response::finished);
 }
