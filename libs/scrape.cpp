@@ -104,7 +104,6 @@ bool checkStory(int id) {
 		
 	} else {
 		//If the story's state is not to be rescraped, exit false. Else, continue...
-		
 		if ((state == 5 && settings.checkInvalid == false)
 		|| (state == 1 && settings.checkCompleted == false)
 		|| (state == 2 && settings.checkIncomplete == false)
@@ -156,33 +155,14 @@ bool checkStory(int id) {
 		}
 			
 		//Make sure the story isn't invalid...
-		if (state == 5) {
+		if (state == 5
+		|| (state == 1 && settings.saveCompleted == false)
+		|| (state == 2 && settings.saveIncomplete == false)
+		|| (state == 3 && settings.saveHiatus == false)
+		|| (state == 4 && settings.saveCancelled == false)) {
 			printw("Skipping...\n");
 			refresh();
 					
-			return 0;
-				
-		} else if (state == 1 && settings.saveCompleted == false) {
-			printw("Skipping...\n");
-			refresh();
-						
-			return 0;
-				
-		} else if (state == 2 && settings.saveIncomplete == false) {
-			printw("Skipping...\n");
-			refresh();
-					
-			return 0;
-				
-		} else if (state == 3 && settings.saveHiatus == false) {
-			printw("Skipping...\n");
-			refresh();
-						
-			return 0;
-		} else if (state == 4 && settings.saveCancelled == false) {
-			printw("Skipping...\n");
-			refresh();
-						
 			return 0;
 		}
 	}
