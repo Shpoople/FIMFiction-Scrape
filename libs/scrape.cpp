@@ -287,6 +287,7 @@ bool scrapeStory(int id, const char *data, int scrape) {
 			//Save each individual chapter
 			const picojson::array list = v.get("story").get("chapters").get<picojson::array>();
 			int chapterNum = 0;
+			int updatedChap = 0;
 			
 			threadPool threads(id, story.chapters);
 			
@@ -305,7 +306,6 @@ bool scrapeStory(int id, const char *data, int scrape) {
 				if (lastCached != lastUpdated) {
 					//Dates do not match.
 					//This must either be our first time checking, or the chapter has been updated
-					
 					
 					if (settings.threads) {
 						threads.append(chapterNum, chapTitle, chapUrl, lastCached, lastUpdated);
@@ -330,12 +330,13 @@ bool scrapeStory(int id, const char *data, int scrape) {
 							updateChapterSQL(id, chapterNum, lastUpdated, strTitle.c_str(), chapData.c_str());
 						}
 					}
+					updatedChap++;
 				}
 				
 				chapterNum++;
 			}
 			
-			if (settings.threads) {
+			if (settings.threads && updatedChap != 0) {
 				//Execute threads and wait until they're finished
 				threads.execute(settings.threads);
 				while(!threads.finishedAll);

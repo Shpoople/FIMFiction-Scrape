@@ -488,6 +488,8 @@ int deleteStorySQL(int id) {
 	std::stringstream ss;
 	std::string sql;
 	
+	//CONCAT IS SHORTER, USE IT!
+	
 	printw("Deleting incomplete data for story %i... ", id);
 	refresh();
 			
@@ -507,6 +509,9 @@ int deleteStorySQL(int id) {
 	refresh();
 	
 	//DELETE ENTRY FROM STORY DATABASE
+	ss.str("");
+	ss.clear();
+	
 	ss << "DELETE FROM `stories` WHERE `storyid`=" << id << ";";
 
 	sql = ss.str();
@@ -523,6 +528,9 @@ int deleteStorySQL(int id) {
 	refresh();
 	
 	//DELETE ENTRIES FROM TAG DATABASE
+	ss.str("");
+	ss.clear();
+	
 	ss << "DELETE FROM `tags` WHERE `story`=" << id << ";";
 
 	sql = ss.str();
@@ -539,6 +547,9 @@ int deleteStorySQL(int id) {
 	refresh();
 	
 	//DELETE ENTRY FROM STORY DATABASE
+	ss.str("");
+	ss.clear();
+	
 	ss << "DELETE FROM `chapters` WHERE `parentid`=" << id << ";";
 
 	sql = ss.str();
