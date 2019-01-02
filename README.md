@@ -1,3 +1,5 @@
+# Dead Dove, do not eat
+
 # FIMFiction-Scrape
 
 The **FIMFiction Story Scraper** is a simple command line program that allows you to download FIMFiction stories and their cover images for offline usage, or for the creation of an online backup of your own.
